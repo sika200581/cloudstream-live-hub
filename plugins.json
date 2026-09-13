@@ -1,0 +1,26 @@
+[
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=twitch.tv&sz=%size%",
+        "jarFileSize": 56997,
+        "fileHash": "sha256-a7cc95f77bbd00a311d122201c63babe70b63fb398641fa28bf2b2c77346150a",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/sika200581/cloudstream-twitch-extension",
+        "fileSize": 15239,
+        "status": 1,
+        "authors": [
+            "CranberrySoup",
+            "sika200581"
+        ],
+        "tvTypes": [
+            "Live"
+        ],
+        "version": 2,
+        "internalName": "TwitchProvider",
+        "jarUrl": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/TwitchProvider.jar",
+        "description": "Watch livestreams from Twitch",
+        "url": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/TwitchProvider.cs3",
+        "name": "TwitchProvider",
+        "jarHash": "sha256-88086809ed6ccc21cca611ce2ba4f2563b1082486ffda3daa6350da9126b548b",
+        "language": "uni"
+    }
+]
