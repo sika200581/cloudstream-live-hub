@@ -16,10 +16,11 @@
         ],
         "version": 2,
         "internalName": "TwitchProvider",
-        "jarUrl": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/builds/TwitchProvider.jar",
+        "jarUrl": "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@builds/TwitchProvider.jar",
         "description": "Watch livestreams from Twitch",
-        "url": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/builds/TwitchProvider.cs3",
+        "url": "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@builds/TwitchProvider.cs3",
         "name": "TwitchProvider",
-        "jarHash": "sha256-88086809ed6ccc21cca611ce2ba4f2563b1082486ffda3daa6350da9126b548b"
+        "jarHash": "sha256-88086809ed6ccc21cca611ce2ba4f2563b1082486ffda3daa6350da9126b548b",
+        "language": "uni"
     }
 ]
