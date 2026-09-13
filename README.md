@@ -37,7 +37,7 @@ Optional ADB deploy to a device with CloudStream installed:
 
 Add this raw `repo.json` URL in CloudStream → Extensions → Add repository:
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
+`https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/repo.json`
 
 ## Notes
 

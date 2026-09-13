@@ -3,6 +3,6 @@
   "description": "Watch Twitch livestreams in CloudStream",
   "manifestVersion": 1,
   "pluginLists": [
-    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/builds/plugins.json"
+    "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@builds/plugins.json"
   ]
 }
