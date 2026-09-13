@@ -1,2 +1,2 @@
 # Plugin builds
-Built .cs3 / plugins.json from GitHub Actions land here.
+CloudStream downloads plugins from this branch via `plugins.json`.
