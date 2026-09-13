@@ -1,0 +1,8 @@
+{
+  "name": "Twitch CloudStream Extension",
+  "description": "Watch Twitch livestreams in CloudStream",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/builds/plugins.json"
+  ]
+}
