@@ -1,4 +1,4 @@
-version = 3
+version = 4
 
 cloudstream {
     description = "Twitch Discover — languages, top games, viewer counts, and richer search"

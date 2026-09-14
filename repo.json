@@ -1,6 +1,6 @@
 {
   "name": "Twitch CloudStream Extension",
-  "description": "Watch Twitch livestreams in CloudStream",
+  "description": "Twitch Discover — richer live browse with stream thumbnails",
   "manifestVersion": 1,
   "pluginLists": [
     "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/plugins.json"

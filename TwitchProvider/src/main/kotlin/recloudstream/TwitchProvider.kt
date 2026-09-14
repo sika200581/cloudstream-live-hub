@@ -108,7 +108,6 @@ class TwitchProvider : MainAPI() {
         }
         val login = href.substringAfterLast('/').ifBlank { return null }
         val displayName = anchor.text().ifBlank { login }
-        val image = this.selectFirst("img")?.attr("src").orEmpty()
         val viewers = this.selectFirst("span.to-number, .viewers-value, td:nth-child(2)")
             ?.text()
             ?.replace(",", "")
@@ -127,8 +126,15 @@ class TwitchProvider : MainAPI() {
             TvType.Live,
             fix = false
         ) {
-            posterUrl = image
+            // Twitch live preview (landscape), not the channel avatar
+            posterUrl = streamPreviewUrl(login)
         }
+    }
+
+    /** Same preview CDN Twitch uses for live cards (440x248 landscape). */
+    private fun streamPreviewUrl(login: String): String {
+        val user = login.lowercase(Locale.ROOT)
+        return "https://static-cdn.jtvnw.net/previews-ttv/live_user_${user}-440x248.jpg"
     }
 
     private suspend fun parseTopGames(): List<HomePageList> {
@@ -164,7 +170,9 @@ class TwitchProvider : MainAPI() {
         }
         val rank = doc.select("div.rank-badge > span").lastOrNull()?.text()?.toIntOrNull()
         val image = doc.selectFirst("div#app-logo > img")?.attr("src").orEmpty()
-        val poster = doc.selectFirst("div.embed-responsive > img")?.attr("src").orEmpty().ifEmpty { image }
+        val poster = streamPreviewUrl(realUrl).ifBlank {
+            doc.selectFirst("div.embed-responsive > img")?.attr("src").orEmpty().ifEmpty { image }
+        }
         val description = doc.selectFirst("div[style='word-wrap:break-word;font-size:12px;']")
             ?.text()
             .orEmpty()
