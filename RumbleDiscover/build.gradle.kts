@@ -1,7 +1,7 @@
-version = 4
+version = 5
 
 cloudstream {
-    description = "Rumble Discover - live streams + videos"
+    description = "Rumble Discover - Live now via fast JSON feed"
     authors = listOf("sika200581")
 
     status = 1
