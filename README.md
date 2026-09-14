@@ -1,6 +1,6 @@
-# CloudStream Twitch, Kick & YouTube Live Discover
+# CloudStream Twitch, Kick, YouTube Live & Rumble Discover
 
-Improved **Live** extensions for CloudStream 3 — denser homepage and better discoverability.
+Improved **Live** extensions for CloudStream 3 — denser homepage and better discoverability (Twitch, Kick, YouTube Live, Rumble).
 
 ## Plugins
 
@@ -31,17 +31,26 @@ Forked from the official [recloudstream/extensions](https://github.com/recloudst
 - Optional region (`gl`) in plugin settings
 - Does **not** use public Invidious instances
 
+
+### RumbleDiscover
+- Homepage: **Live now** (numeric `data-video-id` from `/browse/live` → embedJS, keep `live == 2` only) + category keyword rows (search + live filter)
+- Cards: title, channel, thumbnail from embedJS metadata
+- Search: video listings; live preferred when embedJS reports `live == 2`; VODs included
+- Channel pages (`/c/` / `/user/`) as TvSeries when HTML scrape works (best-effort)
+- Playback: HLS from `https://rumble.com/embedJS/u3/?request=video&ver=2&v={id}` (`ua.hls` / `u.hls`); optional mp4 qualities
+- Do **not** rely on watch-page scrape for playback (datacenter 403s common); use numeric ids + embedJS
+
 ## Install in CloudStream
 
-Repository URL (v11 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover):
+Repository URL (v12 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover + RumbleDiscover):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v11.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v12.json`
 
 Or latest pointer:
 
 `https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
 
-Then install **TwitchDiscover**, **KickDiscover**, and/or **YouTubeLiveDiscover**.
+Then install **TwitchDiscover**, **KickDiscover**, **YouTubeLiveDiscover**, and/or **RumbleDiscover**.
 
 ## Build
 
@@ -49,6 +58,7 @@ Then install **TwitchDiscover**, **KickDiscover**, and/or **YouTubeLiveDiscover*
 ./gradlew :TwitchDiscover:make
 ./gradlew :KickDiscover:make
 ./gradlew :YouTubeLiveDiscover:make
+./gradlew :RumbleDiscover:make
 ```
 
 Requires JDK 17 + Android SDK. Plugins with settings are Android-only (`isCrossPlatform = false`) so AlertDialog settings work.
@@ -60,3 +70,7 @@ Requires JDK 17 + Android SDK. Plugins with settings are Android-only (`isCrossP
 - **Kick VODs/clips**: listed on channel pages when APIs return them; playback uses VOD `source` / clip `clip_url` HLS.
 - Twitch live playback via Twitch extractor (`twitch.tv` → m3u8); VOD/clip playback depends on the same extractor/API.
 - **YouTube Live**: discovery via Innertube (no login). Playback depends on CloudStream’s built-in YouTube extractor / NewPipe; extractor breakage on the host app affects play. Region (`gl`) affects trending/search mix. Upcoming scheduled lives are skipped. Channel live tabs are not a separate UX in v1 (search `channel + live` / watch URLs only).
+- **Rumble Cloudflare**: browse/search HTML may challenge datacenter IPs; plugins send browser-like headers and warm up `rumble.com` for cookies. Real devices usually fine.
+- **Rumble HTML pairing**: page slug ↔ `data-video-id` pairing in listing HTML is unreliable — homepage resolves IDs via embedJS and trusts embed metadata. Page slugs often return `false` on embedJS; watch-page scrape is used only as a fallback to discover the real id.
+- **Rumble categories**: `/browse/live?category=` does not filter server-side; category homepage rows use search + live filter (best-effort). Channel pages are best-effort for v1.
+
