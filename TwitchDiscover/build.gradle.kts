@@ -1,12 +1,12 @@
-version = 8
+version = 9
 
 cloudstream {
-    description = "Twitch Discover - category episodes, language settings"
+    description = "Twitch Discover - channel pages (Live+VOD+clips), viewer counts"
     authors = listOf("CranberrySoup", "sika200581")
 
     status = 1
 
-    tvTypes = listOf("Live")
+    tvTypes = listOf("Live", "TvSeries")
     iconUrl = "https://www.google.com/s2/favicons?domain=twitch.tv&sz=%size%"
 
     // Android-only so plugin settings (AlertDialog) are available

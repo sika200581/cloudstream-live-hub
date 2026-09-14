@@ -4,32 +4,35 @@ Improved Twitch **Live** extension for CloudStream 3 — denser homepage and bet
 
 ## What’s better
 
-- Homepage sections: worldwide, English / Arabic / Spanish / Portuguese / French / German
-- Top games expanded into their own rows (up to 10 categories)
-- Card titles include viewer counts (`Name · 37.8K`)
-- Channel pages show game, language, viewers, rank as tags
+- Homepage sections: worldwide + selectable language rows (plugin settings)
+- Category directory with live stream episodes and thumbnails
+- Card / episode titles include viewer counts (`Name · 37.8K`)
+- Channel pages (TvSeries): Live episode + recent VODs/clips with thumbnails
 - Search covers channels and matching game categories
 
 Forked from the official [recloudstream/extensions](https://github.com/recloudstream/extensions) `TwitchProvider` (CranberrySoup).
 
 ## Install in CloudStream
 
-Repository URL:
+Repository URL (v9):
+
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v9.json`
+
+Or latest pointer:
 
 `https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
 
-Then install **TwitchProvider** (shown as **Twitch Discover**).
+Then install **TwitchDiscover** (shown as **Twitch Discover**).
 
 ## Build
 
 ```bash
-./gradlew TwitchProvider:make
+./gradlew :TwitchDiscover:make
 ```
 
-Requires JDK 17 + Android SDK. CI workflow needs a GitHub token with `workflow` scope if you want automated `builds/` publishing.
+Requires JDK 17 + Android SDK. Android-only plugin (`isCrossPlatform = false`) so settings (AlertDialog) work.
 
 ## Notes
 
-- Live Twitch only
-- Catalog data via [twitchtracker.com](https://twitchtracker.com)
-- Playback still uses the Twitch extractor (`twitch.tv` → m3u8)
+- Live playback via Twitch extractor (`twitch.tv` → m3u8); VOD/clip playback depends on the same extractor/API
+- Browse data via Twitch GQL; channel search via [twitchtracker.com](https://twitchtracker.com)

@@ -16,7 +16,6 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newLiveSearchResponse
-import com.lagradost.cloudstream3.newLiveStreamLoadResponse
 import com.lagradost.cloudstream3.newTvSeriesLoadResponse
 import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.utils.ExtractorApi
@@ -31,12 +30,12 @@ import kotlin.math.pow
 
 /**
  * Twitch Discover — GQL-backed browse with stream titles, live previews,
- * and a category directory (game box art → live streams).
+ * category directory, and channel pages (Live + VODs + clips).
  */
 class TwitchProvider : MainAPI() {
     override var mainUrl = "https://www.twitch.tv"
     override var name = "Twitch Discover"
-    override val supportedTypes = setOf(TvType.Live)
+    override val supportedTypes = setOf(TvType.Live, TvType.TvSeries)
 
     override var lang = "uni"
     override val hasMainPage = true
@@ -44,8 +43,13 @@ class TwitchProvider : MainAPI() {
     private val isHorizontal = true
     private val maxStreams = 24
     private val maxCategories = 30
+    private val maxChannelVods = 12
+    private val maxChannelClips = 12
+
     /** Path-based so CloudStream won't mangle a custom scheme into mainUrl/…. */
     private val categoryPath = "/__discover_category__/"
+    /** Channel detail pages (TvSeries). Distinct from real /{login} used for HLS. */
+    private val channelPath = "/__discover_channel__/"
 
     private val categoriesSection = "Category directory"
 
@@ -97,11 +101,17 @@ class TwitchProvider : MainAPI() {
     override suspend fun load(url: String): LoadResponse {
         val cleaned = url.trim()
         val categoryId = parseCategoryId(cleaned)
-        return if (categoryId != null) {
-            loadCategory(categoryId)
-        } else {
-            loadChannel(cleaned)
+        if (categoryId != null) return loadCategory(categoryId)
+
+        val channelLogin = parseChannelLogin(cleaned)
+        if (channelLogin != null) return loadChannel(channelLogin)
+
+        // Fallback: last path segment as login (legacy / bare logins)
+        val login = cleaned.substringAfterLast("/").substringBefore("?").lowercase(Locale.ROOT)
+        if (login.isNotBlank() && !login.startsWith("__discover_")) {
+            return loadChannel(login)
         }
+        throw RuntimeException("Unrecognized Twitch URL")
     }
 
     private fun parseCategoryId(url: String): String? {
@@ -114,15 +124,33 @@ class TwitchProvider : MainAPI() {
         return null
     }
 
+    private fun parseChannelLogin(url: String): String? {
+        val markers = listOf(channelPath, "/__discover_channel__/")
+        for (marker in markers) {
+            if (url.contains(marker)) {
+                return url.substringAfter(marker)
+                    .substringBefore("/")
+                    .substringBefore("?")
+                    .lowercase(Locale.ROOT)
+                    .ifBlank { null }
+            }
+        }
+        return null
+    }
+
+    private fun channelPageUrl(login: String): String = "$mainUrl$channelPath$login"
+
+    private fun liveChannelUrl(login: String): String = "https://www.twitch.tv/$login"
+
     private suspend fun loadCategory(gameId: String): LoadResponse {
         val game = fetchGameWithStreams(gameId, maxStreams)
             ?: throw RuntimeException("Could not load category")
 
         val boxArt = boxArtUrl(game.boxArtURL)
-        val streamCards = game.streams.map { it.toStreamCard() }
 
         // TvType.Live hid the episode list in CloudStream. TvSeries shows episodes
         // as a proper list; each episode poster is the live_user stream thumbnail.
+        // Episode data is the real channel URL so loadLinks plays HLS directly.
         val episodes = game.streams.mapIndexed { index, stream ->
             val login = stream.broadcaster?.login.orEmpty()
             val display = stream.broadcaster?.displayName?.ifBlank { login } ?: login
@@ -136,7 +164,7 @@ class TwitchProvider : MainAPI() {
                     append(title.truncate(70))
                 }
             }
-            newEpisode("https://www.twitch.tv/$login") {
+            newEpisode(liveChannelUrl(login)) {
                 this.name = epName
                 this.posterUrl = previewUrl(login)
                 this.episode = index + 1
@@ -144,6 +172,8 @@ class TwitchProvider : MainAPI() {
                 this.description = title.ifBlank { null }
             }
         }
+
+        val streamCards = game.streams.map { it.toStreamCard() }
 
         return newTvSeriesLoadResponse(
             game.name,
@@ -163,45 +193,153 @@ class TwitchProvider : MainAPI() {
                 game.viewersCount?.let { formatViewers(it) + " viewers" },
                 "${episodes.size} live"
             )
-            // Backup row if a CS build still prefers related:
             recommendations = streamCards
         }
     }
 
-    private suspend fun loadChannel(url: String): LoadResponse {
-        val login = url.substringAfterLast("/").substringBefore("?").ifBlank {
-            throw RuntimeException("Missing channel")
-        }
-        val user = fetchUsers(listOf(login)).firstOrNull()
+    private suspend fun loadChannel(login: String): LoadResponse {
+        val user = fetchChannelDetail(login, maxChannelVods, maxChannelClips)
             ?: throw RuntimeException("Could not load channel")
 
+        val display = user.displayName?.ifBlank { login } ?: login
         val stream = user.stream
+        val profile = user.profileImageURL?.ifBlank { null }
+        val livePreview = if (stream != null) previewUrl(login) else null
+        val vods = user.videos
+        val clips = user.clips
+
+        val seasonLive = if (stream != null) 1 else 0
+        val seasonVod = when {
+            vods.isEmpty() -> 0
+            seasonLive > 0 -> 2
+            else -> 1
+        }
+        val seasonClip = when {
+            clips.isEmpty() -> 0
+            seasonVod > 0 -> seasonVod + 1
+            seasonLive > 0 -> 2
+            else -> 1
+        }
+
+        val episodes = buildList {
+            if (stream != null) {
+                val title = stream.title?.trim().orEmpty()
+                val viewers = stream.viewersCount
+                val epName = buildString {
+                    append("LIVE")
+                    if (viewers != null) append(" · ").append(formatViewers(viewers))
+                    if (title.isNotBlank()) {
+                        append('\n')
+                        append(title.truncate(70))
+                    }
+                }
+                add(
+                    newEpisode(liveChannelUrl(login)) {
+                        this.name = epName
+                        this.posterUrl = livePreview
+                        this.episode = 1
+                        this.season = seasonLive
+                        this.description = buildString {
+                            append(title)
+                            stream.game?.name?.let {
+                                if (isNotEmpty()) append('\n')
+                                append("Playing: $it")
+                            }
+                        }.ifBlank { null }
+                    }
+                )
+            }
+
+            vods.forEachIndexed { index, vod ->
+                val id = vod.id ?: return@forEachIndexed
+                val title = vod.title?.trim().orEmpty().ifBlank { "VOD" }
+                val views = vod.viewCount
+                val dur = vod.lengthSeconds?.let { formatDuration(it) }
+                val epName = buildString {
+                    append("VOD")
+                    if (views != null) append(" · ").append(formatViewers(views))
+                    if (dur != null) append(" · ").append(dur)
+                    append('\n')
+                    append(title.truncate(70))
+                }
+                add(
+                    newEpisode("https://www.twitch.tv/videos/$id") {
+                        this.name = epName
+                        this.posterUrl = vodThumbUrl(vod.previewThumbnailURL)
+                        this.episode = index + 1
+                        this.season = seasonVod
+                        this.description = title.ifBlank { null }
+                    }
+                )
+            }
+
+            clips.forEachIndexed { index, clip ->
+                val slug = clip.slug?.ifBlank { null } ?: return@forEachIndexed
+                val title = clip.title?.trim().orEmpty().ifBlank { "Clip" }
+                val views = clip.viewCount
+                val dur = clip.durationSeconds?.let { formatDuration(it.toLong()) }
+                val epName = buildString {
+                    append("Clip")
+                    if (views != null) append(" · ").append(formatViewers(views))
+                    if (dur != null) append(" · ").append(dur)
+                    append('\n')
+                    append(title.truncate(70))
+                }
+                add(
+                    newEpisode("https://www.twitch.tv/$login/clip/$slug") {
+                        this.name = epName
+                        this.posterUrl = clip.thumbnailURL
+                        this.episode = index + 1
+                        this.season = seasonClip
+                        this.description = title.ifBlank { null }
+                    }
+                )
+            }
+
+            if (isEmpty()) {
+                add(
+                    newEpisode(liveChannelUrl(login)) {
+                        this.name = "Offline"
+                        this.posterUrl = profile
+                        this.episode = 1
+                        this.season = 1
+                        this.description = "Channel is offline"
+                    }
+                )
+            }
+        }
+
         val tags = listOfNotNull(
             if (stream != null) "Live" else "Offline",
             stream?.game?.name,
             stream?.language,
             stream?.viewersCount?.let { formatViewers(it) + " watching" },
+            if (vods.isNotEmpty()) "${vods.size} VODs" else null,
+            if (clips.isNotEmpty()) "${clips.size} clips" else null,
         )
         val plot = buildString {
-            stream?.title?.let { append(it) }
+            user.description?.trim()?.takeIf { it.isNotEmpty() }?.let { append(it) }
+            stream?.title?.let {
+                if (isNotEmpty()) append("\n\n")
+                append("Now: $it")
+            }
             stream?.game?.name?.let {
                 if (isNotEmpty()) append("\n")
                 append("Playing: $it")
             }
-            if (stream == null) append("Channel is offline")
+            if (stream == null && isEmpty()) append("Channel is offline")
         }
-        val twitchUrl = "https://www.twitch.tv/$login"
-        val preview = stream?.let { previewUrl(login) }
 
-        return newLiveStreamLoadResponse(
-            user.displayName ?: login,
-            twitchUrl,
-            twitchUrl
+        return newTvSeriesLoadResponse(
+            display,
+            channelPageUrl(login),
+            TvType.TvSeries,
+            episodes
         ) {
             this.plot = plot
-            posterUrl = preview ?: ""
-            backgroundPosterUrl = preview
-            this@newLiveStreamLoadResponse.tags = tags
+            posterUrl = livePreview ?: profile ?: ""
+            backgroundPosterUrl = livePreview ?: profile
+            this@newTvSeriesLoadResponse.tags = tags
         }
     }
 
@@ -237,10 +375,10 @@ class TwitchProvider : MainAPI() {
                 } else {
                     newLiveSearchResponse(
                         "${user.displayName ?: login} · Offline",
-                        login,
+                        channelPageUrl(login),
                         TvType.Live,
                         fix = false
-                    ) { posterUrl = "" }
+                    ) { posterUrl = user.profileImageURL.orEmpty() }
                 }
             }
         }
@@ -254,8 +392,11 @@ class TwitchProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        // Category pages pass a twitch channel URL of the top stream (or mainUrl)
-        if (!data.contains("twitch.tv/")) return false
+        // Discover marker URLs are detail pages, not playable streams
+        if (data.contains("__discover_category__") || data.contains("__discover_channel__")) {
+            return false
+        }
+        if (!data.contains("twitch.tv")) return false
         return loadExtractor(data, subtitleCallback, callback)
     }
 
@@ -373,6 +514,7 @@ class TwitchProvider : MainAPI() {
               users(logins: ${'$'}logins) {
                 login
                 displayName
+                profileImageURL(width: 300)
                 stream {
                   title
                   language
@@ -386,6 +528,68 @@ class TwitchProvider : MainAPI() {
             mapOf("logins" to logins)
         )
         return res.data?.users.orEmpty().filterNotNull()
+    }
+
+    private suspend fun fetchChannelDetail(
+        login: String,
+        vodFirst: Int,
+        clipFirst: Int
+    ): ChannelDetail? {
+        val res = gql(
+            """
+            query(${'$'}login: String!, ${'$'}vodFirst: Int!, ${'$'}clipFirst: Int!) {
+              user(login: ${'$'}login) {
+                login
+                displayName
+                profileImageURL(width: 300)
+                description
+                stream {
+                  title
+                  language
+                  viewersCount
+                  previewImageURL
+                  game { id name boxArtURL }
+                }
+                videos(first: ${'$'}vodFirst, type: ARCHIVE, sort: TIME) {
+                  edges {
+                    node {
+                      id
+                      title
+                      previewThumbnailURL
+                      lengthSeconds
+                      createdAt
+                      viewCount
+                    }
+                  }
+                }
+                clips(first: ${'$'}clipFirst) {
+                  edges {
+                    node {
+                      id
+                      slug
+                      title
+                      thumbnailURL
+                      durationSeconds
+                      viewCount
+                      createdAt
+                    }
+                  }
+                }
+              }
+            }
+            """.trimIndent(),
+            mapOf("login" to login, "vodFirst" to vodFirst, "clipFirst" to clipFirst)
+        )
+        val u = res.data?.user ?: return null
+        return ChannelDetail(
+            login = u.login ?: login,
+            displayName = u.displayName,
+            profileImageURL = u.profileImageURL,
+            description = u.description,
+            stream = u.stream,
+            videos = u.videos?.edges.orEmpty().mapNotNull { it.node },
+            clips = u.clips?.edges.orEmpty().mapNotNull { it.node },
+        )
     }
 
     // --- mapping ---
@@ -405,7 +609,7 @@ class TwitchProvider : MainAPI() {
 
         return newLiveSearchResponse(
             name,
-            login,
+            channelPageUrl(login),
             TvType.Live,
             fix = false
         ) {
@@ -452,6 +656,11 @@ class TwitchProvider : MainAPI() {
         return t.replace("{width}", "285").replace("{height}", "380")
     }
 
+    private fun vodThumbUrl(template: String?): String? {
+        val t = template?.ifBlank { null } ?: return null
+        return t.replace("{width}", "440").replace("{height}", "248")
+    }
+
     private fun String.truncate(max: Int): String {
         val t = trim()
         return if (t.length <= max) t else t.take(max - 1).trimEnd() + "…"
@@ -470,6 +679,18 @@ class TwitchProvider : MainAPI() {
         return formatted + units[(exp - 1).coerceIn(0, units.lastIndex)]
     }
 
+    private fun formatDuration(seconds: Long): String {
+        if (seconds <= 0) return "0:00"
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        val s = seconds % 60
+        return if (h > 0) {
+            String.format(Locale.US, "%d:%02d:%02d", h, m, s)
+        } else {
+            String.format(Locale.US, "%d:%02d", m, s)
+        }
+    }
+
     // --- GQL models ---
 
     data class GqlResponse(
@@ -481,6 +702,7 @@ class TwitchProvider : MainAPI() {
         @JsonProperty("games") val games: EdgeList<GameNode>? = null,
         @JsonProperty("game") val game: GameDetail? = null,
         @JsonProperty("users") val users: List<UserNode?>? = null,
+        @JsonProperty("user") val user: UserDetailNode? = null,
     )
 
     data class EdgeList<T>(
@@ -537,6 +759,7 @@ class TwitchProvider : MainAPI() {
     data class UserNode(
         @JsonProperty("login") val login: String? = null,
         @JsonProperty("displayName") val displayName: String? = null,
+        @JsonProperty("profileImageURL") val profileImageURL: String? = null,
         @JsonProperty("stream") val stream: UserStream? = null,
     )
 
@@ -548,6 +771,44 @@ class TwitchProvider : MainAPI() {
         @JsonProperty("game") val game: GameRef? = null,
     )
 
+    data class UserDetailNode(
+        @JsonProperty("login") val login: String? = null,
+        @JsonProperty("displayName") val displayName: String? = null,
+        @JsonProperty("profileImageURL") val profileImageURL: String? = null,
+        @JsonProperty("description") val description: String? = null,
+        @JsonProperty("stream") val stream: UserStream? = null,
+        @JsonProperty("videos") val videos: EdgeList<VideoNode>? = null,
+        @JsonProperty("clips") val clips: EdgeList<ClipNode>? = null,
+    )
+
+    data class ChannelDetail(
+        val login: String,
+        val displayName: String?,
+        val profileImageURL: String?,
+        val description: String?,
+        val stream: UserStream?,
+        val videos: List<VideoNode>,
+        val clips: List<ClipNode>,
+    )
+
+    data class VideoNode(
+        @JsonProperty("id") val id: String? = null,
+        @JsonProperty("title") val title: String? = null,
+        @JsonProperty("previewThumbnailURL") val previewThumbnailURL: String? = null,
+        @JsonProperty("lengthSeconds") val lengthSeconds: Long? = null,
+        @JsonProperty("createdAt") val createdAt: String? = null,
+        @JsonProperty("viewCount") val viewCount: Long? = null,
+    )
+
+    data class ClipNode(
+        @JsonProperty("id") val id: String? = null,
+        @JsonProperty("slug") val slug: String? = null,
+        @JsonProperty("title") val title: String? = null,
+        @JsonProperty("thumbnailURL") val thumbnailURL: String? = null,
+        @JsonProperty("durationSeconds") val durationSeconds: Double? = null,
+        @JsonProperty("viewCount") val viewCount: Long? = null,
+        @JsonProperty("createdAt") val createdAt: String? = null,
+    )
 
     companion object {
         private const val LANG_PREF_KEY = "TwitchDiscover_home_languages"
