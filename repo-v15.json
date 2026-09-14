@@ -3,6 +3,6 @@
   "description": "Twitch / Kick / YouTube Live / Rumble for CloudStream",
   "manifestVersion": 1,
   "pluginLists": [
-    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/plugins-v15.json"
+    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/plugins-v15b.json"
   ]
 }
