@@ -1,7 +1,7 @@
-version = 4
+version = 5
 
 cloudstream {
-    description = "Twitch Discover — languages, top games, viewer counts, and richer search"
+    description = "Twitch Discover - stream titles, live previews, category directory"
     authors = listOf("CranberrySoup", "sika200581")
 
     status = 1
