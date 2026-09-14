@@ -33,18 +33,17 @@ Forked from the official [recloudstream/extensions](https://github.com/recloudst
 
 
 ### RumbleDiscover
-- Homepage: **Live now** (prefer live-marked cards on `/browse/live` → embedJS; keep effective live: `live == 2` or HLS contains `live-hls`; dedupe by stream) + category keyword rows (search + live filter)
-- Cards: title, channel, thumbnail from embedJS metadata; URLs use `/__discover_video__/{id}` (not `/embed/`)
-- Search: video listings; live preferred when embedJS reports effective live; VODs included
-- Channel pages (`/c/` / `/user/`) as TvSeries when HTML scrape works (best-effort)
-- Playback: HLS from `https://rumble.com/embedJS/u3/?request=video&ver=2&v={id}` (`ua.hls` / `u.hls`); optional mp4 qualities; identity always the requested `v=` (ignore JSON `vid`)
-- Do **not** rely on watch-page scrape for playback (datacenter 403s common); use numeric ids + embedJS
+- Homepage: **Live now** from multi-page `/browse/live` live cards → **watch page → short embed id** (`v7db0j2`) → embedJS; keep effective live (`live == 2` or HLS contains `live-hls`); **dedupe by HLS URL**; sort by viewers when available
+- Do **not** use numeric `data-video-id` as the primary embed key (often wrong VOD)
+- Category rows: search live-badged cards with the same watch→short-id resolve; if search blocks, filter browse/live by title/author keywords (best-effort)
+- Cards: `/__discover_video__/{shortId}` (not `/embed/`); title/channel/thumb from embedJS
+- Playback: HLS from `embedJS/u3/?v={shortId}`; warm-up hits `/browse/live` so watch HTML returns 200
 
 ## Install in CloudStream
 
-Repository URL (v13 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover + RumbleDiscover):
+Repository URL (v14 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover + RumbleDiscover):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v13.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v14.json`
 
 Or latest pointer:
 

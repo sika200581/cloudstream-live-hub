@@ -31,13 +31,13 @@ import kotlin.math.pow
 /**
  * Rumble Discover — live-first browse via HTML listings + embedJS metadata/playback.
  *
- * Homepage prefers live-marked cards on `/browse/live`, resolves via embedJS, and keeps
- * streams that are effectively live (`live == 2` or HLS contains `live-hls`). Playback
- * uses HLS from embedJS (`ua.hls` / `u.hls`). Card URLs use `/__discover_video__/{id}`
- * so CloudStream does not hit `/embed/{id}` HTML (403). Always keep embed identity as
- * the requested `v=` id — never replace with JSON `vid`.
+ * Important: HTML `data-video-id` (numeric) is NOT the embedJS id. Watch pages contain
+ * `Rumble("play", { "video":"v7db0j2" …})` — that short id is what embedJS expects.
+ * Homepage scrapes `/browse/live` (paginated), resolves each live card via watch→short id,
+ * keeps effective lives (`live==2` or HLS contains `live-hls`), and dedupes by HLS URL.
  *
- * Cloudflare may challenge datacenter IPs; browser-like headers + warm-up + retries help.
+ * Card URLs use `/__discover_video__/{shortId}` so CloudStream does not hit `/embed/{id}`
+ * HTML (403). Always keep embed identity as the requested `v=` id — never replace with JSON `vid`.
  */
 class RumbleProvider : MainAPI() {
     override var mainUrl = "https://rumble.com"
@@ -48,8 +48,9 @@ class RumbleProvider : MainAPI() {
     override val hasMainPage = true
 
     private val isHorizontal = true
-    private val maxLive = 24
-    private val maxResolve = 40
+    private val maxLive = 40
+    private val maxResolve = 48
+    private val maxBrowsePages = 4
     private val maxSearch = 24
     private val maxChannelItems = 20
 
@@ -72,8 +73,42 @@ class RumbleProvider : MainAPI() {
         "Referer" to "https://rumble.com/",
     )
 
+    /** Category keyword hints for best-effort filtering of browse/live when search fails. */
+    private val categoryKeywords = mapOf(
+        "gaming" to listOf(
+            "game", "gaming", "play", "stream", "fps", "rpg", "minecraft", "fortnite",
+            "valorant", "warzone", "gta", "roblox", "twitch", "esport", "xbox", "playstation",
+            "nintendo", "pc game", "speedrun"
+        ),
+        "news" to listOf(
+            "news", "breaking", "live news", "headline", "politics", "election", "trump",
+            "congress", "war", "ukraine", "israel", "rt ", "newsmax", "cnn", "fox", "msnbc",
+            "report", "journalist", "press"
+        ),
+        "music" to listOf(
+            "music", "dj", "radio", "song", "concert", "live set", "edm", "hip hop", "rap",
+            "rock", "jazz", "playlist", "remix", "karaoke", "band"
+        ),
+        "viral" to listOf(
+            "viral", "funny", "comedy", "reaction", "prank", "meme", "clip", "shorts",
+            "trending", "drama", "rant"
+        ),
+        "finance" to listOf(
+            "finance", "stock", "crypto", "bitcoin", "market", "trading", "invest", "forex",
+            "economy", "fed", "gold", "money", "business", "wall street", "nasdaq"
+        ),
+        "sports" to listOf(
+            "sport", "nfl", "nba", "mlb", "nhl", "soccer", "football", "basketball", "mma",
+            "ufc", "boxing", "wrestling", "golf", "tennis", "racing", "f1", "baseball", "hockey"
+        ),
+    )
+
     @Volatile
     private var warmed = false
+
+    /** Cached browse/live resolved metas for category fallback (same session). */
+    @Volatile
+    private var cachedBrowseLives: List<EmbedMeta>? = null
 
     override val mainPage
         get() = mainPageOf(
@@ -92,8 +127,7 @@ class RumbleProvider : MainAPI() {
             request.data == "live" -> fetchLiveFromBrowse(maxLive)
             request.data.startsWith("cat:") -> {
                 val cat = request.data.removePrefix("cat:")
-                // Category query on browse/live is not reliably filtered; use search + live filter.
-                fetchLiveFromSearch(cat, maxLive)
+                fetchLiveForCategory(cat, maxLive.coerceAtMost(24))
             }
             else -> emptyList()
         }.map { it.toLiveCard() }
@@ -115,7 +149,6 @@ class RumbleProvider : MainAPI() {
         if (q.isEmpty()) return emptyList()
         warmUp()
 
-        // Channel / user shortcuts
         val channelHint = q.removePrefix("@").removePrefix("c/").removePrefix("user/")
         if (q.startsWith("c/") || q.startsWith("@") || q.startsWith("user/")) {
             val url = if (q.startsWith("user/") || looksLikeUser(channelHint)) {
@@ -136,19 +169,17 @@ class RumbleProvider : MainAPI() {
         val listing = scrapeSearchVideos(q).take(maxSearch)
         if (listing.isEmpty()) return emptyList()
 
-        // Prefer live when detectable via a light embedJS pass on numeric ids
         val resolved = LinkedHashMap<String, SearchResponse>()
         for (item in listing) {
-            val id = item.numericId
-            if (id != null) {
-                val meta = fetchEmbed(id) ?: continue
-                if (meta.live == 2) {
-                    resolved[id] = meta.toLiveCard()
+            val shortId = resolveListingToShortId(item)
+            if (shortId != null) {
+                val meta = fetchEmbed(shortId) ?: continue
+                if (isEffectiveLive(meta)) {
+                    resolved[shortId] = meta.toLiveCard()
                 } else {
-                    resolved[id] = meta.toVodCard()
+                    resolved[shortId] = meta.toVodCard()
                 }
             } else {
-                // Page-slug listing without trusted numeric id — show from HTML scrape
                 val url = item.pageUrl ?: continue
                 val label = buildString {
                     append(item.author?.ifBlank { null } ?: "Rumble")
@@ -170,7 +201,6 @@ class RumbleProvider : MainAPI() {
             if (resolved.size >= maxSearch) break
         }
 
-        // Stable order: lives first
         return resolved.values.sortedByDescending {
             it.type == TvType.Live
         }
@@ -183,7 +213,6 @@ class RumbleProvider : MainAPI() {
         parseCategorySlug(cleaned)?.let { return loadCategory(it) }
         parseChannelSlug(cleaned)?.let { (kind, name) -> return loadChannel(kind, name) }
 
-        // Plain /c/Name or /user/Name
         Regex("""rumble\.com/(c|user)/([^/?#]+)""").find(cleaned)?.let { m ->
             return loadChannel(m.groupValues[1], m.groupValues[2])
         }
@@ -198,9 +227,9 @@ class RumbleProvider : MainAPI() {
         val author = meta.authorName
         val thumb = meta.bestThumb()
         val watchUrl = meta.pageUrl ?: discoverVideoUrl(videoId)
-        val data = videoId // loadLinks uses numeric / embed id
+        val data = videoId
 
-        return if (meta.live == 2) {
+        return if (isEffectiveLive(meta)) {
             newLiveStreamLoadResponse(title, watchUrl, data) {
                 plot = buildString {
                     author?.let { append(it) }
@@ -247,7 +276,6 @@ class RumbleProvider : MainAPI() {
         val meta = fetchEmbed(videoId) ?: return false
         var emitted = false
 
-        // Prefer live HLS
         val hlsUrls = meta.hlsUrls()
         for ((label, hls) in hlsUrls) {
             callback(
@@ -264,7 +292,6 @@ class RumbleProvider : MainAPI() {
             emitted = true
         }
 
-        // Optional mp4 qualities from ua.mp4
         for ((height, mp4) in meta.mp4Urls()) {
             callback(
                 newExtractorLink(
@@ -285,56 +312,151 @@ class RumbleProvider : MainAPI() {
 
     // --- discovery ---
 
+    /**
+     * Multi-page `/browse/live` → live cards → watch-page short embed id → embedJS.
+     * Dedupes by HLS URL; sorts by viewer count descending when available.
+     */
     private suspend fun fetchLiveFromBrowse(limit: Int): List<EmbedMeta> {
-        val html = getHtml("$mainUrl/browse/live") ?: return emptyList()
-        val liveMarked = extractLiveMarkedVideoIds(html)
-        val ids = (if (liveMarked.isNotEmpty()) liveMarked else extractDataVideoIds(html))
-            .distinct()
-            .take(maxResolve)
-        return resolveLiveMetas(ids, limit)
+        cachedBrowseLives?.takeIf { it.size >= limit.coerceAtMost(12) }?.let { cached ->
+            return cached.take(limit)
+        }
+
+        val cards = ArrayList<ListingItem>()
+        val seenPages = HashSet<String>()
+        for (page in 1..maxBrowsePages) {
+            if (cards.size >= maxResolve) break
+            val url = if (page == 1) "$mainUrl/browse/live" else "$mainUrl/browse/live?page=$page"
+            val html = getHtml(url) ?: continue
+            val pageCards = scrapeLiveCards(html)
+            for (c in pageCards) {
+                val key = c.pageUrl ?: continue
+                if (!seenPages.add(key)) continue
+                cards.add(c)
+            }
+            if (pageCards.isEmpty()) break
+        }
+
+        val lives = resolveLiveCards(cards.take(maxResolve), limit)
+        if (lives.isNotEmpty()) {
+            cachedBrowseLives = lives
+        }
+        return lives
+    }
+
+    private suspend fun fetchLiveForCategory(category: String, limit: Int): List<EmbedMeta> {
+        // 1) Search page: live-badged items → watch → short id
+        val fromSearch = fetchLiveFromSearch(category, limit)
+        if (fromSearch.isNotEmpty()) return fromSearch
+
+        // 2) Fall back: filter multi-page browse/live by title/author keywords
+        val browse = cachedBrowseLives ?: fetchLiveFromBrowse(maxLive)
+        val keywords = categoryKeywords[category.lowercase(Locale.ROOT)]
+            ?: listOf(category.lowercase(Locale.ROOT))
+        val filtered = browse.filter { meta ->
+            val hay = buildString {
+                append(decodeHtml(meta.title).orEmpty())
+                append(' ')
+                append(meta.authorName.orEmpty())
+            }.lowercase(Locale.ROOT)
+            keywords.any { kw -> hay.contains(kw) }
+        }
+        if (filtered.isNotEmpty()) return filtered.take(limit)
+
+        // Last resort: return a slice of browse lives so the row is not empty
+        return browse.take(limit.coerceAtMost(8))
     }
 
     private suspend fun fetchLiveFromSearch(query: String, limit: Int): List<EmbedMeta> {
         val listing = scrapeSearchVideos(query)
-        val ids = listing.mapNotNull { it.numericId }.distinct().take(maxResolve)
-        if (ids.isNotEmpty()) {
-            val lives = resolveLiveMetas(ids, limit)
-            if (lives.isNotEmpty()) return lives
-        }
-        // Fall back: resolve page URLs via watch-page scrape (best-effort)
-        val out = ArrayList<EmbedMeta>()
-        for (item in listing) {
-            if (out.size >= limit) break
-            val page = item.pageUrl ?: continue
-            val id = resolveVideoId(page) ?: continue
-            val meta = fetchEmbed(id) ?: continue
-            if (meta.live == 2) out.add(meta)
-        }
-        return out
+        if (listing.isEmpty()) return emptyList()
+
+        // Prefer live-badged cards; otherwise try all
+        val preferred = listing.filter { it.isLiveHint }.ifEmpty { listing }
+        return resolveLiveCards(preferred.take(maxResolve), limit)
     }
 
-    private suspend fun resolveLiveMetas(ids: List<String>, limit: Int): List<EmbedMeta> {
+    private suspend fun resolveLiveCards(cards: List<ListingItem>, limit: Int): List<EmbedMeta> {
         val out = ArrayList<EmbedMeta>()
-        val seenIds = HashSet<String>()
         val seenStreams = HashSet<String>()
-        for (id in ids) {
+        val seenIds = HashSet<String>()
+
+        for (card in cards) {
             if (out.size >= limit) break
-            if (!seenIds.add(id)) continue
-            val meta = fetchEmbed(id) ?: continue
-            if (meta.live != 2) continue
+            val shortId = resolveListingToShortId(card) ?: continue
+            if (!seenIds.add(shortId)) continue
+            val meta = fetchEmbed(shortId) ?: continue
+            if (!isEffectiveLive(meta)) continue
             val streamKey = meta.hlsUrls().firstOrNull()?.second
                 ?: meta.pageUrl
                 ?: meta.id
             if (!seenStreams.add(streamKey)) continue
-            out.add(meta)
+            // Prefer listing viewers when embed has none
+            val withViews = if (meta.viewers == null && card.viewers != null) {
+                meta.copy(viewers = card.viewers)
+            } else meta
+            out.add(withViews)
         }
-        return out
+
+        return out.sortedByDescending { it.viewers ?: -1L }
+    }
+
+    /** Resolve listing card to short embed id via watch page (never use numeric data-video-id). */
+    private suspend fun resolveListingToShortId(item: ListingItem): String? {
+        item.pageUrl?.let { page ->
+            extractShortIdFromWatch(page)?.let { return it }
+        }
+        // Optional last-resort: numeric id (often wrong VOD — only if no page URL)
+        val num = item.numericId
+        if (num != null && item.pageUrl == null) {
+            val meta = fetchEmbed(num)
+            if (meta != null && isEffectiveLive(meta)) return meta.id
+        }
+        return null
+    }
+
+    private suspend fun extractShortIdFromWatch(pageUrl: String): String? {
+        val url = when {
+            pageUrl.startsWith("http") -> pageUrl.substringBefore("?")
+            pageUrl.startsWith("/") -> mainUrl + pageUrl.substringBefore("?")
+            else -> "$mainUrl/$pageUrl".substringBefore("?")
+        }
+        val html = getHtml(url) ?: return null
+        return extractShortEmbedId(html)
+    }
+
+    private fun extractShortEmbedId(html: String): String? {
+        // Primary: Rumble("play", { … "video":"v7db0j2" …})
+        Regex(
+            """Rumble\(\s*"play"\s*,\s*\{[\s\S]{0,1200}?"video"\s*:\s*"([0-9a-z]+)"""",
+            RegexOption.IGNORE_CASE
+        ).find(html)?.groupValues?.getOrNull(1)?.let { return it }
+
+        Regex(
+            """["']video["']\s*:\s*["'](v[0-9a-z]+)["']""",
+            RegexOption.IGNORE_CASE
+        ).find(html)?.groupValues?.getOrNull(1)?.let { return it }
+
+        Regex(
+            """embedJS[^"']*[?&]v=([0-9a-z]+)""",
+            RegexOption.IGNORE_CASE
+        ).find(html)?.groupValues?.getOrNull(1)?.let { return it }
+
+        Regex(
+            """rumble\.com/embed/(?:[0-9a-z]+\.)?([0-9a-z]+)""",
+            RegexOption.IGNORE_CASE
+        ).find(html)?.groupValues?.getOrNull(1)?.let { return it }
+
+        return null
+    }
+
+    private fun isEffectiveLive(meta: EmbedMeta): Boolean {
+        if (meta.live == 2) return true
+        return meta.hlsUrls().any { it.second.contains("live-hls") }
     }
 
     private suspend fun loadCategory(slug: String): LoadResponse {
         warmUp()
-        // Prefer search-based live list for the category keyword
-        val lives = fetchLiveFromSearch(slug, maxLive)
+        val lives = fetchLiveForCategory(slug, maxLive)
         val episodes = lives.mapIndexed { index, meta ->
             val title = decodeHtml(meta.title)?.ifBlank { null } ?: "Live"
             val author = meta.authorName
@@ -373,18 +495,15 @@ class RumbleProvider : MainAPI() {
         val doc = Jsoup.parse(html, mainUrl)
         val display = doc.selectFirst("h1")?.text()?.ifBlank { null } ?: name
         val items = scrapeListingItems(html).ifEmpty {
-            // Featured / grid cards with data-video-id only
-            extractDataVideoIds(html).map { ListingItem(numericId = it, pageUrl = discoverVideoUrl(it)) }
+            scrapeLiveCards(html)
         }.take(maxChannelItems)
 
         var liveCount = 0
         val episodes = buildList {
             items.forEachIndexed { index, item ->
-                val id = item.numericId
-                    ?: item.pageUrl?.let { resolveVideoId(it) }
-                    ?: return@forEachIndexed
+                val id = resolveListingToShortId(item) ?: return@forEachIndexed
                 val meta = fetchEmbed(id) ?: return@forEachIndexed
-                val isLive = meta.live == 2
+                val isLive = isEffectiveLive(meta)
                 if (isLive) liveCount++
                 val title = decodeHtml(meta.title)?.ifBlank { null } ?: item.title ?: "Video"
                 val season = if (isLive) 1 else 2
@@ -433,6 +552,8 @@ class RumbleProvider : MainAPI() {
 
     private suspend fun warmUp() {
         if (warmed) return
+        // Hit browse/live so cookies work for subsequent watch-page HTML
+        runCatching { app.get("$mainUrl/browse/live", headers = htmlHeaders) }
         runCatching { app.get(mainUrl, headers = htmlHeaders) }
         warmed = true
     }
@@ -442,7 +563,6 @@ class RumbleProvider : MainAPI() {
             val res = app.get(url, headers = htmlHeaders)
             val text = res.text
             if (text.contains("Just a moment", ignoreCase = true) && text.length < 20_000) {
-                // Cloudflare challenge — retry once after another warm-up
                 warmed = false
                 warmUp()
                 val retry = app.get(url, headers = htmlHeaders).text
@@ -478,8 +598,6 @@ class RumbleProvider : MainAPI() {
     private fun parseEmbed(requestedId: String, root: JsonNode): EmbedMeta? {
         if (root.isBoolean && !root.asBoolean()) return null
         if (!root.isObject) return null
-        // Always keep the requested v= id. Rumble's JSON `vid` is often a different
-        // number and must not replace identity (breaks later fetches / playback).
         val rawLive = root.path("live").asInt(-1)
         val hasLiveHls = collectHlsUrlStrings(root).any { it.contains("live-hls") }
         val effectiveLive = if (rawLive == 2 || hasLiveHls) 2 else rawLive
@@ -502,6 +620,9 @@ class RumbleProvider : MainAPI() {
             !pagePath.isNullOrBlank() -> mainUrl + pagePath
             else -> null
         }
+        val viewers = root.path("watching").asLong(-1).takeIf { it >= 0 }
+            ?: root.path("viewer_count").asLong(-1).takeIf { it >= 0 }
+            ?: root.path("views").asLong(-1).takeIf { it >= 0 }
         return EmbedMeta(
             id = requestedId,
             live = effectiveLive,
@@ -511,10 +632,10 @@ class RumbleProvider : MainAPI() {
             thumbs = thumbs,
             pageUrl = pageUrl,
             root = root,
+            viewers = viewers,
         )
     }
 
-    /** Collect HLS URL strings from ua.hls / u.hls without building labeled pairs. */
     private fun collectHlsUrlStrings(root: JsonNode): List<String> {
         val out = ArrayList<String>()
         fun absorb(node: JsonNode?) {
@@ -543,102 +664,111 @@ class RumbleProvider : MainAPI() {
     }
 
     /**
-     * Resolve a numeric / embed id from a Rumble URL or raw id.
-     * Page slugs like `v7fh4sc` often fail on embedJS — scrape the watch page when needed.
+     * Resolve short embed id (`v7db0j2`) or numeric id from a Rumble URL / discover marker.
+     * Prefer short ids via embedJS; scrape watch page when only a page slug URL is known.
+     * Do NOT prefer numeric data-video-id from watch HTML.
      */
     private suspend fun resolveVideoId(raw: String): String? {
         val s = raw.trim()
         if (s.isEmpty()) return null
 
-        // Raw numeric
-        if (s.matches(Regex("""^\d{6,}$"""))) return s
+        // Discover card: /__discover_video__/{id} — id may be short (v…) or numeric
+        Regex("""__discover_video__/([0-9a-zA-Z]+)""").find(s)?.groupValues?.getOrNull(1)?.let {
+            return it
+        }
 
-        // Internal discover card URL: /__discover_video__/{numericId}
-        Regex("""__discover_video__/(\d+)""").find(s)?.groupValues?.getOrNull(1)?.let { return it }
+        // Raw short embed id
+        if (s.matches(Regex("""^v[0-9a-z]+$""", RegexOption.IGNORE_CASE))) {
+            fetchEmbed(s)?.let { return it.id }
+            return s
+        }
+
+        // Raw numeric — last resort (often wrong for live cards)
+        if (s.matches(Regex("""^\d{6,}$"""))) return s
 
         // embed/{id} or embed/{prefix}.{id}
         Regex("""rumble\.com/embed/(?:[0-9a-z]+\.)?([0-9a-z]+)""", RegexOption.IGNORE_CASE)
             .find(s)?.groupValues?.getOrNull(1)?.let { return it }
 
-        // Already looks like embed id (v + alnum) — try embedJS first; if false, scrape
-        val slug = Regex("""rumble\.com/(v[0-9a-z]+)""", RegexOption.IGNORE_CASE)
+        // Watch page slug /v….html — scrape for Rumble("play") short id (not data-video-id)
+        val pageSlug = Regex("""rumble\.com/(v[0-9a-z]+(?:-[^/?#]*)?\.html)""", RegexOption.IGNORE_CASE)
             .find(s)?.groupValues?.getOrNull(1)
-            ?: s.takeIf { it.matches(Regex("""^v[0-9a-z]+$""", RegexOption.IGNORE_CASE)) }
+            ?: Regex("""/(v[0-9a-z]+(?:-[^/?#]*)?\.html)""", RegexOption.IGNORE_CASE)
+                .find(s)?.groupValues?.getOrNull(1)
 
-        if (slug != null) {
-            fetchEmbed(slug)?.let { return it.id }
+        if (pageSlug != null || s.contains("rumble.com/v") || s.contains("/v")) {
+            val pageUrl = when {
+                s.startsWith("http") -> s.substringBefore("?")
+                s.startsWith("/") -> mainUrl + s.substringBefore("?")
+                pageSlug != null -> "$mainUrl/$pageSlug"
+                else -> null
+            }
+            if (pageUrl != null) {
+                extractShortIdFromWatch(pageUrl)?.let { return it }
+            }
         }
 
-        // Watch / page URL — scrape for data-video-id or Rumble("play") embed id
-        if (s.contains("rumble.com/")) {
-            val html = getHtml(s.substringBefore("?").let {
-                if (it.startsWith("http")) it else mainUrl + it
-            }) ?: return slug
-            extractDataVideoIds(html).firstOrNull()?.let { return it }
-            Regex(
-                """Rumble\(\s*"play"\s*,\s*\{[^}]*["']?video["']?\s*:\s*["']([0-9a-z]+)["']""",
-                RegexOption.IGNORE_CASE
-            ).find(html)?.groupValues?.getOrNull(1)?.let { return it }
-            Regex("""rumble\.com/embed/(?:[0-9a-z]+\.)?([0-9a-z]+)""", RegexOption.IGNORE_CASE)
-                .find(html)?.groupValues?.getOrNull(1)?.let { return it }
-        }
+        // Already looks like short id embedded in path without .html
+        Regex("""rumble\.com/(v[0-9a-z]+)(?:[/?#]|$)""", RegexOption.IGNORE_CASE)
+            .find(s)?.groupValues?.getOrNull(1)?.let { slug ->
+                fetchEmbed(slug)?.let { return it.id }
+                extractShortIdFromWatch("$mainUrl/$slug")?.let { return it }
+                return slug
+            }
 
-        return slug
+        return null
     }
 
     // --- HTML scrape helpers ---
 
-    private fun extractDataVideoIds(html: String): List<String> {
-        return Regex("""data-video-id="(\d+)"""")
-            .findAll(html)
-            .map { it.groupValues[1] }
-            .distinct()
-            .toList()
-    }
-
-    /**
-     * Prefer ids from cards explicitly marked live on browse HTML.
-     * Fallback regex looks for data-video-id near videostream__status--live.
-     */
-    private fun extractLiveMarkedVideoIds(html: String): List<String> {
+    /** Live-marked cards on browse/live (and similar grids). */
+    private fun scrapeLiveCards(html: String): List<ListingItem> {
         val doc = Jsoup.parse(html, mainUrl)
-        val fromSel = LinkedHashSet<String>()
+        val out = ArrayList<ListingItem>()
+        val seen = HashSet<String>()
+
         val selectors = listOf(
-            "div.videostream:has(.videostream__status--live)[data-video-id]",
-            "div.videostream:has(.thumbnail__thumb--live)[data-video-id]",
-            "div.videostream.videostream--live[data-video-id]",
-            "div.videostream:has(.videostream__badge--live)[data-video-id]",
+            "div.videostream.thumbnail__grid-item",
+            "div.videostream[data-video-id]",
+            "div.videostream.thumbnail__grid--item",
         )
         for (sel in selectors) {
             for (el in doc.select(sel)) {
-                el.attr("data-video-id").takeIf { it.isNotBlank() }?.let { fromSel.add(it) }
+                val isLive = el.selectFirst(
+                    ".thumbnail__thumb--live, .videostream__status--live, .videostream__badge--live"
+                ) != null || el.hasClass("videostream--live") ||
+                    el.className().contains("live")
+                if (!isLive) continue
+
+                val href = el.selectFirst("a.videostream__link[href], a.title__link[href], a[href*=/v]")
+                    ?.attr("abs:href")
+                    ?.substringBefore("?")
+                val title = el.selectFirst("img.thumbnail__image")?.attr("alt")
+                    ?: el.selectFirst(".thumbnail__title, h3.thumbnail__title")?.attr("title")
+                    ?: el.selectFirst(".thumbnail__title, h3")?.text()
+                val thumb = el.selectFirst("img.thumbnail__image")?.attr("abs:src")
+                val author = el.selectFirst("a.channel__link, a[href*=/c/], a[href*=/user/]")?.text()
+                val viewsText = el.selectFirst(".videostream__number")?.text()?.trim()
+                val viewers = parseViewerCount(viewsText)
+                // Keep numeric only as optional metadata — never primary embed key
+                val numeric = el.attr("data-video-id").ifBlank { null }
+                val key = href ?: continue
+                if (!seen.add(key)) continue
+                out.add(
+                    ListingItem(
+                        numericId = numeric,
+                        pageUrl = href,
+                        title = title,
+                        thumbnail = thumb,
+                        isLiveHint = true,
+                        author = author,
+                        viewers = viewers,
+                    )
+                )
             }
+            if (out.isNotEmpty()) break
         }
-        if (fromSel.isNotEmpty()) return fromSel.toList()
-
-        val regexHits = LinkedHashSet<String>()
-        Regex(
-            """data-video-id="(\d+)"[^>]{0,200}>[\s\S]{0,1200}?videostream__status--live|videostream__status--live[\s\S]{0,1200}?data-video-id="(\d+)"""",
-            setOf(RegexOption.IGNORE_CASE)
-        ).findAll(html).forEach { m ->
-            val id = m.groupValues[1].ifBlank { m.groupValues[2] }
-            if (id.isNotBlank()) regexHits.add(id)
-        }
-        // Also: thumbnail__thumb--live near data-video-id
-        Regex(
-            """data-video-id="(\d+)"[^>]{0,200}>[\s\S]{0,800}?thumbnail__thumb--live|thumbnail__thumb--live[\s\S]{0,800}?data-video-id="(\d+)"""",
-            setOf(RegexOption.IGNORE_CASE)
-        ).findAll(html).forEach { m ->
-            val id = m.groupValues[1].ifBlank { m.groupValues[2] }
-            if (id.isNotBlank()) regexHits.add(id)
-        }
-        return regexHits.toList()
-    }
-
-    private suspend fun scrapeSearchVideos(query: String): List<ListingItem> {
-        val encoded = URLEncoder.encode(query, "UTF-8")
-        val html = getHtml("$mainUrl/search/video?q=$encoded") ?: return emptyList()
-        return scrapeListingItems(html)
+        return out
     }
 
     private fun scrapeListingItems(html: String): List<ListingItem> {
@@ -646,29 +776,31 @@ class RumbleProvider : MainAPI() {
         val out = ArrayList<ListingItem>()
         val seen = HashSet<String>()
 
-        // Newer grid cards
-        for (el in doc.select("div.videostream[data-video-id], div.videostream.thumbnail__grid-item, div.videostream.thumbnail__grid--item")) {
+        for (el in doc.select(
+            "div.videostream[data-video-id], div.videostream.thumbnail__grid-item, div.videostream.thumbnail__grid--item"
+        )) {
             val id = el.attr("data-video-id").ifBlank { null }
-            val href = el.selectFirst("a[href*=/v]")?.attr("abs:href")
+            val href = el.selectFirst("a[href*=/v]")?.attr("abs:href")?.substringBefore("?")
             val title = el.selectFirst("img.thumbnail__image")?.attr("alt")
                 ?: el.selectFirst(".thumbnail__title, .videostream__title, h3")?.text()
             val thumb = el.selectFirst("img.thumbnail__image")?.attr("abs:src")
-            val key = id ?: href ?: continue
+            val viewsText = el.selectFirst(".videostream__number")?.text()?.trim()
+            val key = href ?: id ?: continue
             if (!seen.add(key)) continue
             out.add(
                 ListingItem(
                     numericId = id,
-                    pageUrl = href?.substringBefore("?"),
+                    pageUrl = href,
                     title = title,
                     thumbnail = thumb,
                     isLiveHint = el.selectFirst(".thumbnail__thumb--live, .videostream__status--live") != null
                         || el.className().contains("live"),
-                    author = el.selectFirst("a[href*=/c/], a[href*=/user/]")?.text()
+                    author = el.selectFirst("a[href*=/c/], a[href*=/user/]")?.text(),
+                    viewers = parseViewerCount(viewsText),
                 )
             )
         }
 
-        // Legacy search / listing articles
         for (el in doc.select("article.video-item")) {
             val a = el.selectFirst("a.video-item--a[href]") ?: continue
             val href = a.attr("abs:href").substringBefore("?")
@@ -680,9 +812,7 @@ class RumbleProvider : MainAPI() {
             val liveHint = el.hasClass("video-item--live") ||
                 el.className().contains("live") ||
                 duration.isNullOrBlank()
-            // data-id on rumbles-vote is unreliable for pairing — do not trust as video id
-            val key = href
-            if (!seen.add(key)) continue
+            if (!seen.add(href)) continue
             out.add(
                 ListingItem(
                     numericId = null,
@@ -690,12 +820,35 @@ class RumbleProvider : MainAPI() {
                     title = title,
                     thumbnail = thumb,
                     isLiveHint = liveHint,
-                    author = author
+                    author = author,
                 )
             )
         }
 
         return out
+    }
+
+    private suspend fun scrapeSearchVideos(query: String): List<ListingItem> {
+        val encoded = URLEncoder.encode(query, "UTF-8")
+        val html = getHtml("$mainUrl/search/video?q=$encoded") ?: return emptyList()
+        // Prefer live-badged subset when present
+        val live = scrapeLiveCards(html)
+        if (live.isNotEmpty()) return live
+        return scrapeListingItems(html)
+    }
+
+    private fun parseViewerCount(raw: String?): Long? {
+        if (raw.isNullOrBlank()) return null
+        val s = raw.trim().uppercase(Locale.US).replace(",", "")
+        val m = Regex("""^([\d.]+)\s*([KMB])?$""").find(s) ?: return s.filter { it.isDigit() }.toLongOrNull()
+        val num = m.groupValues[1].toDoubleOrNull() ?: return null
+        val mult = when (m.groupValues[2]) {
+            "K" -> 1_000.0
+            "M" -> 1_000_000.0
+            "B" -> 1_000_000_000.0
+            else -> 1.0
+        }
+        return (num * mult).toLong()
     }
 
     // --- mapping ---
@@ -704,6 +857,10 @@ class RumbleProvider : MainAPI() {
         buildString {
             append(authorName?.ifBlank { null } ?: "Rumble")
             append(" · LIVE")
+            viewers?.let {
+                append(" · ")
+                append(formatViewers(it))
+            }
             decodeHtml(title)?.let {
                 append('\n')
                 append(it.truncate(70))
@@ -744,7 +901,6 @@ class RumbleProvider : MainAPI() {
         val ua = root.get("ua")
         val uaHls = ua?.get("hls")
         if (uaHls != null && uaHls.isObject) {
-            // Prefer auto / live keys first
             val keys = uaHls.fieldNames().asSequence().toList()
             val ordered = keys.sortedBy { k ->
                 when {
@@ -757,7 +913,6 @@ class RumbleProvider : MainAPI() {
         }
         absorb(root.path("u").get("hls"), "hls")
 
-        // Prefer live-hls URLs first in list order
         return out.entries
             .sortedByDescending { it.value.contains("live-hls") }
             .map { it.key to it.value }
@@ -778,8 +933,6 @@ class RumbleProvider : MainAPI() {
         }
         return out.sortedByDescending { it.first }
     }
-
-    private fun embedUrl(id: String) = "$mainUrl/embed/$id"
 
     private fun discoverVideoUrl(id: String) = "$mainUrl$videoPath$id"
 
@@ -811,7 +964,6 @@ class RumbleProvider : MainAPI() {
     }
 
     private fun looksLikeUser(name: String): Boolean {
-        // Heuristic unused for most paths; keep for @user shortcuts
         return name.contains('_') || name.any { it.isLowerCase() }
     }
 
@@ -845,6 +997,7 @@ class RumbleProvider : MainAPI() {
         val thumbnail: String? = null,
         val isLiveHint: Boolean = false,
         val author: String? = null,
+        val viewers: Long? = null,
     )
 
     data class EmbedMeta(
@@ -856,6 +1009,7 @@ class RumbleProvider : MainAPI() {
         val thumbs: List<String>,
         val pageUrl: String?,
         val root: JsonNode,
+        val viewers: Long? = null,
     )
 
     companion object {
