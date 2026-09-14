@@ -1,4 +1,4 @@
-# CloudStream Twitch & Kick Discover
+# CloudStream Twitch, Kick & YouTube Live Discover
 
 Improved **Live** extensions for CloudStream 3 — denser homepage and better discoverability.
 
@@ -22,26 +22,36 @@ Forked from the official [recloudstream/extensions](https://github.com/recloudst
 - Live playback via Kick `playback_url` HLS (`.m3u8` on live-video.net)
 - Inspired by TwitchDiscover patterns in this repo (`sika200581`)
 
+### YouTubeLiveDiscover
+- **Live streams only** (no VODs, uploads, playlists, or scheduled upcoming)
+- Homepage: Live trending (Innertube browse) + Gaming/Music/News/Sports live rows (search + live filter)
+- Cards: title, channel, viewer count, thumbnail
+- Search: live-only via Innertube `params=EgJAAQ==`
+- Playback via CloudStream `loadExtractor` on `youtube.com/watch?v=…`
+- Optional region (`gl`) in plugin settings
+- Does **not** use public Invidious instances
+
 ## Install in CloudStream
 
-Repository URL (v10 — TwitchDiscover + KickDiscover):
+Repository URL (v11 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v10.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v11.json`
 
 Or latest pointer:
 
 `https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
 
-Then install **TwitchDiscover** and/or **KickDiscover**.
+Then install **TwitchDiscover**, **KickDiscover**, and/or **YouTubeLiveDiscover**.
 
 ## Build
 
 ```bash
 ./gradlew :TwitchDiscover:make
 ./gradlew :KickDiscover:make
+./gradlew :YouTubeLiveDiscover:make
 ```
 
-Requires JDK 17 + Android SDK. Both plugins are Android-only (`isCrossPlatform = false`) so settings (AlertDialog) work.
+Requires JDK 17 + Android SDK. Plugins with settings are Android-only (`isCrossPlatform = false`) so AlertDialog settings work.
 
 ## Notes / limitations
 
@@ -49,3 +59,4 @@ Requires JDK 17 + Android SDK. Both plugins are Android-only (`isCrossPlatform =
 - **Kick language rows**: API `/stream/livestreams/{lang}` returns the same worldwide list; language rows filter client-side by the `language` field (best-effort).
 - **Kick VODs/clips**: listed on channel pages when APIs return them; playback uses VOD `source` / clip `clip_url` HLS.
 - Twitch live playback via Twitch extractor (`twitch.tv` → m3u8); VOD/clip playback depends on the same extractor/API.
+- **YouTube Live**: discovery via Innertube (no login). Playback depends on CloudStream’s built-in YouTube extractor / NewPipe; extractor breakage on the host app affects play. Region (`gl`) affects trending/search mix. Upcoming scheduled lives are skipped. Channel live tabs are not a separate UX in v1 (search `channel + live` / watch URLs only).
