@@ -33,18 +33,18 @@ Forked from the official [recloudstream/extensions](https://github.com/recloudst
 
 
 ### RumbleDiscover
-- Homepage: **Live now** (numeric `data-video-id` from `/browse/live` → embedJS, keep `live == 2` only) + category keyword rows (search + live filter)
-- Cards: title, channel, thumbnail from embedJS metadata
-- Search: video listings; live preferred when embedJS reports `live == 2`; VODs included
+- Homepage: **Live now** (prefer live-marked cards on `/browse/live` → embedJS; keep effective live: `live == 2` or HLS contains `live-hls`; dedupe by stream) + category keyword rows (search + live filter)
+- Cards: title, channel, thumbnail from embedJS metadata; URLs use `/__discover_video__/{id}` (not `/embed/`)
+- Search: video listings; live preferred when embedJS reports effective live; VODs included
 - Channel pages (`/c/` / `/user/`) as TvSeries when HTML scrape works (best-effort)
-- Playback: HLS from `https://rumble.com/embedJS/u3/?request=video&ver=2&v={id}` (`ua.hls` / `u.hls`); optional mp4 qualities
+- Playback: HLS from `https://rumble.com/embedJS/u3/?request=video&ver=2&v={id}` (`ua.hls` / `u.hls`); optional mp4 qualities; identity always the requested `v=` (ignore JSON `vid`)
 - Do **not** rely on watch-page scrape for playback (datacenter 403s common); use numeric ids + embedJS
 
 ## Install in CloudStream
 
-Repository URL (v12 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover + RumbleDiscover):
+Repository URL (v13 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover + RumbleDiscover):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v12.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v13.json`
 
 Or latest pointer:
 
@@ -71,6 +71,7 @@ Requires JDK 17 + Android SDK. Plugins with settings are Android-only (`isCrossP
 - Twitch live playback via Twitch extractor (`twitch.tv` → m3u8); VOD/clip playback depends on the same extractor/API.
 - **YouTube Live**: discovery via Innertube (no login). Playback depends on CloudStream’s built-in YouTube extractor / NewPipe; extractor breakage on the host app affects play. Region (`gl`) affects trending/search mix. Upcoming scheduled lives are skipped. Channel live tabs are not a separate UX in v1 (search `channel + live` / watch URLs only).
 - **Rumble Cloudflare**: browse/search HTML may challenge datacenter IPs; plugins send browser-like headers and warm up `rumble.com` for cookies. Real devices usually fine.
-- **Rumble HTML pairing**: page slug ↔ `data-video-id` pairing in listing HTML is unreliable — homepage resolves IDs via embedJS and trusts embed metadata. Page slugs often return `false` on embedJS; watch-page scrape is used only as a fallback to discover the real id.
-- **Rumble categories**: `/browse/live?category=` does not filter server-side; category homepage rows use search + live filter (best-effort). Channel pages are best-effort for v1.
+- **Rumble HTML pairing**: page slug ↔ `data-video-id` pairing in listing HTML is unreliable — homepage prefers live-marked cards then resolves via embedJS. Page slugs often return `false` on embedJS; watch-page scrape is used only as a fallback to discover the real id. Never use embed JSON `vid` as the plugin id.
+- **Rumble categories**: `/browse/live?category=` does not filter server-side; category homepage rows use search + live filter (best-effort). Channel pages are best-effort.
+- **Rumble embedJS**: may flake under CF/rate limits on some networks; client retries with Origin/Referer. Homepage may still show fewer cards when many resolves fail.
 
