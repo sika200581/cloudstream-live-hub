@@ -1,11 +1,11 @@
 [
     {
         "iconUrl": "https://www.google.com/s2/favicons?domain=twitch.tv&sz=%size%",
-        "jarFileSize": 150708,
-        "fileHash": "sha256-87cd3168c1b5ca6fa8f987a88795556702ff46f8875ae6c59e150b278c8c142a",
+        "jarFileSize": 151363,
+        "fileHash": "sha256-eb44df8d02f03a0bf8a7a3769dfd394f766116b99fb604cb287b99786a17a9d6",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/sika200581/cloudstream-twitch-extension",
-        "fileSize": 32487,
+        "fileSize": 32854,
         "status": 1,
         "authors": [
             "CranberrySoup",
@@ -14,13 +14,13 @@
         "tvTypes": [
             "Live"
         ],
-        "version": 5,
+        "version": 6,
         "internalName": "TwitchDiscover",
         "jarUrl": "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/TwitchDiscover.jar",
-        "description": "Twitch Discover - stream titles, live previews, category directory",
+        "description": "Twitch Discover - stream titles, categories, language rows",
         "url": "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/TwitchDiscover.cs3",
         "name": "TwitchDiscover",
-        "jarHash": "sha256-2711dfc375e282f5590b7c1cf4b5f55de75fd632727d0cb5ca3dee78166e352f",
+        "jarHash": "sha256-537dcf1d90a09bac1e0c4c39a3a1dd4f4d6ad4ec38f4e03c8bec37e45543a224",
         "language": "uni"
     }
 ]

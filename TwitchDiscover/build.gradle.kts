@@ -1,4 +1,4 @@
-version = 5
+version = 6
 
 cloudstream {
     description = "Twitch Discover - stream titles, live previews, category directory"

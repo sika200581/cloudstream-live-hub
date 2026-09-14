@@ -40,7 +40,8 @@ class TwitchProvider : MainAPI() {
     private val isHorizontal = true
     private val maxStreams = 24
     private val maxCategories = 30
-    private val categoryPrefix = "twitch-category:"
+    /** Path-based so CloudStream won't mangle a custom scheme into mainUrl/…. */
+    private val categoryPath = "/__discover_category__/"
 
     private val categoriesSection = "Category directory"
 
@@ -73,10 +74,7 @@ class TwitchProvider : MainAPI() {
             else -> {
                 val lang = request.data.substringAfter("streams:", missingDelimiterValue = "")
                     .ifBlank { null }
-                val fetchCount = if (lang == null) maxStreams else 80
-                val streams = fetchTopStreams(fetchCount)
-                    .filter { lang == null || it.language.equals(lang, ignoreCase = true) }
-                    .take(maxStreams)
+                val streams = fetchTopStreams(maxStreams, language = lang)
                     .map { it.toStreamCard() }
                 newHomePageResponse(
                     listOf(
@@ -93,19 +91,26 @@ class TwitchProvider : MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse {
-        return if (url.startsWith(categoryPrefix) || url.contains("/category/")) {
-            loadCategory(url)
+        val cleaned = url.trim()
+        val categoryId = parseCategoryId(cleaned)
+        return if (categoryId != null) {
+            loadCategory(categoryId)
         } else {
-            loadChannel(url)
+            loadChannel(cleaned)
         }
     }
 
-    private suspend fun loadCategory(url: String): LoadResponse {
-        val gameId = url.substringAfter(categoryPrefix)
-            .substringAfterLast("/category/")
-            .substringBefore("?")
-            .ifBlank { throw RuntimeException("Missing category id") }
+    private fun parseCategoryId(url: String): String? {
+        val markers = listOf(categoryPath, "twitch-category:", "/__discover_category__/")
+        for (marker in markers) {
+            if (url.contains(marker)) {
+                return url.substringAfter(marker).substringBefore("/").substringBefore("?").ifBlank { null }
+            }
+        }
+        return null
+    }
 
+    private suspend fun loadCategory(gameId: String): LoadResponse {
         val game = fetchGameWithStreams(gameId, maxStreams)
             ?: throw RuntimeException("Could not load category")
 
@@ -245,11 +250,17 @@ class TwitchProvider : MainAPI() {
         ).parsed()
     }
 
-    private suspend fun fetchTopStreams(first: Int): List<StreamNode> {
+    private suspend fun fetchTopStreams(first: Int, language: String? = null): List<StreamNode> {
+        // Language must be a Twitch GraphQL Language enum (EN, AR, ES, …), inlined — not a variable.
+        val options = if (language.isNullOrBlank()) {
+            "{ sort: VIEWER_COUNT }"
+        } else {
+            "{ sort: VIEWER_COUNT, languages: [${language.uppercase(Locale.ROOT)}] }"
+        }
         val res = gql(
             """
             query(${'$'}first: Int!) {
-              streams(first: ${'$'}first) {
+              streams(first: ${'$'}first, options: $options) {
                 edges {
                   node {
                     title
@@ -393,7 +404,7 @@ class TwitchProvider : MainAPI() {
         }
         return newLiveSearchResponse(
             label,
-            "$categoryPrefix${id.orEmpty()}",
+            "$mainUrl$categoryPath${id.orEmpty()}",
             TvType.Live,
             fix = false
         ) {
