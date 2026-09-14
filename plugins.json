@@ -16,7 +16,7 @@
         ],
         "version": 6,
         "internalName": "TwitchDiscover",
-        "jarUrl": "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/TwitchDiscover.jar",
+        "jarUrl": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/TwitchDiscover.jar",
         "description": "Twitch Discover - stream titles, categories, language rows",
         "url": "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/TwitchDiscover.cs3",
         "name": "TwitchDiscover",

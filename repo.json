@@ -3,6 +3,6 @@
   "description": "Twitch live discover for CloudStream",
   "manifestVersion": 1,
   "pluginLists": [
-    "https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/plugins.json"
+    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/plugins.json"
   ]
 }
