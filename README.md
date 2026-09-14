@@ -1,9 +1,10 @@
-# CloudStream Twitch Discover
+# CloudStream Twitch & Kick Discover
 
-Improved Twitch **Live** extension for CloudStream 3 — denser homepage and better discoverability than the stock one-row provider.
+Improved **Live** extensions for CloudStream 3 — denser homepage and better discoverability.
 
-## What’s better
+## Plugins
 
+### TwitchDiscover
 - Homepage sections: worldwide + selectable language rows (plugin settings)
 - Category directory with live stream episodes and thumbnails
 - Card / episode titles include viewer counts (`Name · 37.8K`)
@@ -12,27 +13,39 @@ Improved Twitch **Live** extension for CloudStream 3 — denser homepage and bet
 
 Forked from the official [recloudstream/extensions](https://github.com/recloudstream/extensions) `TwitchProvider` (CranberrySoup).
 
+### KickDiscover
+- Homepage: category directory + top live worldwide + language rows (client-side filter; Kick’s lang path does not filter reliably)
+- Live preview thumbnails + viewer counts on cards
+- Category pages as TvSeries with live stream episodes
+- Channel pages as TvSeries: Live + recent VODs/clips
+- Search by channel / category (Kick search, ≥3 characters)
+- Live playback via Kick `playback_url` HLS (`.m3u8` on live-video.net)
+- Inspired by TwitchDiscover patterns in this repo (`sika200581`)
+
 ## Install in CloudStream
 
-Repository URL (v9):
+Repository URL (v10 — TwitchDiscover + KickDiscover):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v9.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v10.json`
 
 Or latest pointer:
 
 `https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
 
-Then install **TwitchDiscover** (shown as **Twitch Discover**).
+Then install **TwitchDiscover** and/or **KickDiscover**.
 
 ## Build
 
 ```bash
 ./gradlew :TwitchDiscover:make
+./gradlew :KickDiscover:make
 ```
 
-Requires JDK 17 + Android SDK. Android-only plugin (`isCrossPlatform = false`) so settings (AlertDialog) work.
+Requires JDK 17 + Android SDK. Both plugins are Android-only (`isCrossPlatform = false`) so settings (AlertDialog) work.
 
-## Notes
+## Notes / limitations
 
-- Live playback via Twitch extractor (`twitch.tv` → m3u8); VOD/clip playback depends on the same extractor/API
-- Browse data via Twitch GQL; channel search via [twitchtracker.com](https://twitchtracker.com)
+- **Kick Cloudflare**: intermittent 403s possible; plugins send browser-like headers. Optional session cookie/token settings may be added later — not required for v1.
+- **Kick language rows**: API `/stream/livestreams/{lang}` returns the same worldwide list; language rows filter client-side by the `language` field (best-effort).
+- **Kick VODs/clips**: listed on channel pages when APIs return them; playback uses VOD `source` / clip `clip_url` HLS.
+- Twitch live playback via Twitch extractor (`twitch.tv` → m3u8); VOD/clip playback depends on the same extractor/API.
