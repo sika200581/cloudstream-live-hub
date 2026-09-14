@@ -33,8 +33,8 @@ import kotlin.math.pow
  *
  * Important: HTML `data-video-id` (numeric) is NOT the embedJS id. Watch pages contain
  * `Rumble("play", { "video":"v7db0j2" …})` — that short id is what embedJS expects.
- * Homepage scrapes `/browse/live` (paginated), resolves each live card via watch→short id,
- * keeps effective lives (`live==2` or HLS contains `live-hls`), and dedupes by HLS URL.
+ * Homepage scrapes `/browse/live` HTML only (fast). Watch→short id→embedJS runs on play.
+ * Do not crawl watch pages during getMainPage — that times out CloudStream (120s).
  *
  * Card URLs use `/__discover_video__/{shortId}` so CloudStream does not hit `/embed/{id}`
  * HTML (403). Always keep embed identity as the requested `v=` id — never replace with JSON `vid`.
@@ -48,9 +48,9 @@ class RumbleProvider : MainAPI() {
     override val hasMainPage = true
 
     private val isHorizontal = true
-    private val maxLive = 40
-    private val maxResolve = 48
-    private val maxBrowsePages = 4
+    private val maxLive = 30
+    private val maxResolve = 8
+    private val maxBrowsePages = 1
     private val maxSearch = 24
     private val maxChannelItems = 20
 
@@ -106,9 +106,9 @@ class RumbleProvider : MainAPI() {
     @Volatile
     private var warmed = false
 
-    /** Cached browse/live resolved metas for category fallback (same session). */
+    /** Cached browse/live HTML cards for homepage + category rows (same session). */
     @Volatile
-    private var cachedBrowseLives: List<EmbedMeta>? = null
+    private var cachedBrowseCards: List<ListingItem>? = null
 
     override val mainPage
         get() = mainPageOf(
@@ -123,14 +123,21 @@ class RumbleProvider : MainAPI() {
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         warmUp()
-        val items = when {
-            request.data == "live" -> fetchLiveFromBrowse(maxLive)
+        val cards = ensureBrowseCards()
+        val items: List<SearchResponse> = when {
+            request.data == "live" -> cards
+                .sortedByDescending { it.viewers ?: -1L }
+                .take(maxLive)
+                .map { it.toLiveCard() }
             request.data.startsWith("cat:") -> {
                 val cat = request.data.removePrefix("cat:")
-                fetchLiveForCategory(cat, maxLive.coerceAtMost(24))
+                filterCardsByCategory(cards, cat)
+                    .sortedByDescending { it.viewers ?: -1L }
+                    .take(maxLive.coerceAtMost(24))
+                    .map { it.toLiveCard() }
             }
             else -> emptyList()
-        }.map { it.toLiveCard() }
+        }
 
         return newHomePageResponse(
             listOf(
@@ -169,41 +176,32 @@ class RumbleProvider : MainAPI() {
         val listing = scrapeSearchVideos(q).take(maxSearch)
         if (listing.isEmpty()) return emptyList()
 
-        val resolved = LinkedHashMap<String, SearchResponse>()
+        // Fast path: show HTML cards. Resolve watch/embed only for a tiny live sample if needed.
+        val out = ArrayList<SearchResponse>()
         for (item in listing) {
-            val shortId = resolveListingToShortId(item)
-            if (shortId != null) {
-                val meta = fetchEmbed(shortId) ?: continue
-                if (isEffectiveLive(meta)) {
-                    resolved[shortId] = meta.toLiveCard()
-                } else {
-                    resolved[shortId] = meta.toVodCard()
-                }
-            } else {
+            if (item.isLiveHint) out.add(item.toLiveCard())
+            else {
                 val url = item.pageUrl ?: continue
-                val label = buildString {
-                    append(item.author?.ifBlank { null } ?: "Rumble")
-                    if (item.isLiveHint) append(" · LIVE")
-                    item.title?.let {
-                        append('\n')
-                        append(it.truncate(70))
+                out.add(
+                    newLiveSearchResponse(
+                        buildString {
+                            append(item.author?.ifBlank { null } ?: "Rumble")
+                            item.title?.let {
+                                append('\n')
+                                append(it.truncate(70))
+                            }
+                        },
+                        url,
+                        TvType.Movie,
+                        fix = false
+                    ) {
+                        posterUrl = item.thumbnail.orEmpty()
                     }
-                }
-                resolved[url] = newLiveSearchResponse(
-                    label,
-                    url,
-                    if (item.isLiveHint) TvType.Live else TvType.Movie,
-                    fix = false
-                ) {
-                    posterUrl = item.thumbnail.orEmpty()
-                }
+                )
             }
-            if (resolved.size >= maxSearch) break
+            if (out.size >= maxSearch) break
         }
-
-        return resolved.values.sortedByDescending {
-            it.type == TvType.Live
-        }
+        return out.sortedByDescending { it.type == TvType.Live }
     }
 
     override suspend fun load(url: String): LoadResponse {
@@ -312,70 +310,58 @@ class RumbleProvider : MainAPI() {
 
     // --- discovery ---
 
-    /**
-     * Multi-page `/browse/live` → live cards → watch-page short embed id → embedJS.
-     * Dedupes by HLS URL; sorts by viewer count descending when available.
-     */
-    private suspend fun fetchLiveFromBrowse(limit: Int): List<EmbedMeta> {
-        cachedBrowseLives?.takeIf { it.size >= limit.coerceAtMost(12) }?.let { cached ->
-            return cached.take(limit)
-        }
-
+    /** One (or two) browse/live HTML scrapes — no watch-page crawl. */
+    private suspend fun ensureBrowseCards(): List<ListingItem> {
+        cachedBrowseCards?.takeIf { it.isNotEmpty() }?.let { return it }
         val cards = ArrayList<ListingItem>()
-        val seenPages = HashSet<String>()
+        val seen = HashSet<String>()
         for (page in 1..maxBrowsePages) {
-            if (cards.size >= maxResolve) break
             val url = if (page == 1) "$mainUrl/browse/live" else "$mainUrl/browse/live?page=$page"
             val html = getHtml(url) ?: continue
-            val pageCards = scrapeLiveCards(html)
-            for (c in pageCards) {
+            for (c in scrapeLiveCards(html)) {
                 val key = c.pageUrl ?: continue
-                if (!seenPages.add(key)) continue
+                if (!seen.add(key)) continue
                 cards.add(c)
             }
-            if (pageCards.isEmpty()) break
+            if (cards.size >= maxLive) break
         }
-
-        val lives = resolveLiveCards(cards.take(maxResolve), limit)
-        if (lives.isNotEmpty()) {
-            cachedBrowseLives = lives
-        }
-        return lives
+        cachedBrowseCards = cards
+        return cards
     }
 
-    private suspend fun fetchLiveForCategory(category: String, limit: Int): List<EmbedMeta> {
-        // 1) Search page: live-badged items → watch → short id
-        val fromSearch = fetchLiveFromSearch(category, limit)
-        if (fromSearch.isNotEmpty()) return fromSearch
-
-        // 2) Fall back: filter multi-page browse/live by title/author keywords
-        val browse = cachedBrowseLives ?: fetchLiveFromBrowse(maxLive)
+    private fun filterCardsByCategory(cards: List<ListingItem>, category: String): List<ListingItem> {
         val keywords = categoryKeywords[category.lowercase(Locale.ROOT)]
             ?: listOf(category.lowercase(Locale.ROOT))
-        val filtered = browse.filter { meta ->
+        return cards.filter { item ->
             val hay = buildString {
-                append(decodeHtml(meta.title).orEmpty())
+                append(item.title.orEmpty())
                 append(' ')
-                append(meta.authorName.orEmpty())
+                append(item.author.orEmpty())
             }.lowercase(Locale.ROOT)
             keywords.any { kw -> hay.contains(kw) }
         }
-        if (filtered.isNotEmpty()) return filtered.take(limit)
+    }
 
-        // Last resort: return a slice of browse lives so the row is not empty
-        return browse.take(limit.coerceAtMost(8))
+    private suspend fun fetchLiveFromBrowse(limit: Int): List<EmbedMeta> {
+        // Used by category detail pages — cap resolves hard to avoid timeouts
+        val cards = ensureBrowseCards().take(maxResolve.coerceAtLeast(limit.coerceAtMost(8)))
+        return resolveLiveCards(cards, limit.coerceAtMost(8))
+    }
+
+    private suspend fun fetchLiveForCategory(category: String, limit: Int): List<EmbedMeta> {
+        val cards = filterCardsByCategory(ensureBrowseCards(), category).take(maxResolve)
+        if (cards.isEmpty()) return emptyList()
+        return resolveLiveCards(cards, limit.coerceAtMost(8))
     }
 
     private suspend fun fetchLiveFromSearch(query: String, limit: Int): List<EmbedMeta> {
         val listing = scrapeSearchVideos(query)
         if (listing.isEmpty()) return emptyList()
-
-        // Prefer live-badged cards; otherwise try all
         val preferred = listing.filter { it.isLiveHint }.ifEmpty { listing }
-        return resolveLiveCards(preferred.take(maxResolve), limit)
+        return resolveLiveCards(preferred.take(maxResolve), limit.coerceAtMost(8))
     }
 
-    private suspend fun resolveLiveCards(cards: List<ListingItem>, limit: Int): List<EmbedMeta> {
+        private suspend fun resolveLiveCards(cards: List<ListingItem>, limit: Int): List<EmbedMeta> {
         val out = ArrayList<EmbedMeta>()
         val seenStreams = HashSet<String>()
         val seenIds = HashSet<String>()
@@ -456,17 +442,19 @@ class RumbleProvider : MainAPI() {
 
     private suspend fun loadCategory(slug: String): LoadResponse {
         warmUp()
-        val lives = fetchLiveForCategory(slug, maxLive)
-        val episodes = lives.mapIndexed { index, meta ->
-            val title = decodeHtml(meta.title)?.ifBlank { null } ?: "Live"
-            val author = meta.authorName
-            newEpisode(discoverVideoUrl(meta.id)) {
+        val cards = filterCardsByCategory(ensureBrowseCards(), slug)
+            .sortedByDescending { it.viewers ?: -1L }
+            .take(maxLive)
+        val episodes = cards.mapIndexed { index, item ->
+            val title = item.title?.ifBlank { null } ?: "Live"
+            val author = item.author
+            newEpisode(item.pageUrl ?: mainUrl) {
                 this.name = buildString {
                     append(author ?: "Rumble")
                     append('\n')
                     append(title.truncate(70))
                 }
-                this.posterUrl = meta.bestThumb()
+                this.posterUrl = item.thumbnail
                 this.episode = index + 1
                 this.season = 1
                 this.description = title
@@ -481,7 +469,7 @@ class RumbleProvider : MainAPI() {
             plot = "Live streams related to “$slug” on Rumble"
             posterUrl = episodes.firstOrNull()?.posterUrl
             tags = listOf("Category", "Live", "${episodes.size} live")
-            recommendations = lives.map { it.toLiveCard() }
+            recommendations = cards.map { it.toLiveCard() }
         }
     }
 
@@ -498,40 +486,30 @@ class RumbleProvider : MainAPI() {
             scrapeLiveCards(html)
         }.take(maxChannelItems)
 
-        var liveCount = 0
-        val episodes = buildList {
-            items.forEachIndexed { index, item ->
-                val id = resolveListingToShortId(item) ?: return@forEachIndexed
-                val meta = fetchEmbed(id) ?: return@forEachIndexed
-                val isLive = isEffectiveLive(meta)
-                if (isLive) liveCount++
-                val title = decodeHtml(meta.title)?.ifBlank { null } ?: item.title ?: "Video"
-                val season = if (isLive) 1 else 2
-                val epIndex = if (isLive) liveCount else (index + 1)
-                add(
-                    newEpisode(discoverVideoUrl(meta.id)) {
-                        this.name = buildString {
-                            if (isLive) append("LIVE · ")
-                            append(title.truncate(70))
-                        }
-                        this.posterUrl = meta.bestThumb() ?: item.thumbnail
-                        this.episode = epIndex
-                        this.season = season
-                        this.description = decodeHtml(meta.title)
-                    }
-                )
+        val episodes = items.mapIndexed { index, item ->
+            val isLive = item.isLiveHint
+            val title = item.title?.ifBlank { null } ?: "Video"
+            newEpisode(item.pageUrl ?: "$mainUrl$path") {
+                this.name = buildString {
+                    if (isLive) append("LIVE · ")
+                    append(title.truncate(70))
+                }
+                this.posterUrl = item.thumbnail
+                this.episode = index + 1
+                this.season = if (isLive) 1 else 2
+                this.description = title
             }
-            if (isEmpty()) {
-                add(
-                    newEpisode("$mainUrl$path") {
-                        this.name = "No videos found"
-                        this.episode = 1
-                        this.season = 1
-                    }
-                )
-            }
+        }.ifEmpty {
+            listOf(
+                newEpisode("$mainUrl$path") {
+                    this.name = "No videos found"
+                    this.episode = 1
+                    this.season = 1
+                }
+            )
         }
 
+        val liveCount = items.count { it.isLiveHint }
         return newTvSeriesLoadResponse(
             display,
             channelPageUrl(kind, name),
@@ -552,9 +530,8 @@ class RumbleProvider : MainAPI() {
 
     private suspend fun warmUp() {
         if (warmed) return
-        // Hit browse/live so cookies work for subsequent watch-page HTML
+        // One browse/live hit sets cookies for later watch-page resolve on play
         runCatching { app.get("$mainUrl/browse/live", headers = htmlHeaders) }
-        runCatching { app.get(mainUrl, headers = htmlHeaders) }
         warmed = true
     }
 
@@ -852,6 +829,26 @@ class RumbleProvider : MainAPI() {
     }
 
     // --- mapping ---
+
+    private fun ListingItem.toLiveCard() = newLiveSearchResponse(
+        buildString {
+            append(author?.ifBlank { null } ?: "Rumble")
+            append(" · LIVE")
+            viewers?.let {
+                append(" · ")
+                append(formatViewers(it))
+            }
+            title?.let {
+                append('\n')
+                append(it.truncate(70))
+            }
+        },
+        pageUrl ?: mainUrl,
+        TvType.Live,
+        fix = false
+    ) {
+        posterUrl = thumbnail.orEmpty()
+    }
 
     private fun EmbedMeta.toLiveCard() = newLiveSearchResponse(
         buildString {
