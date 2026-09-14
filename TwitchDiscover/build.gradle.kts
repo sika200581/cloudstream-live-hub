@@ -1,7 +1,7 @@
-version = 7
+version = 8
 
 cloudstream {
-    description = "Twitch Discover - categories first, stream thumbs in category pages"
+    description = "Twitch Discover - category episodes, language settings"
     authors = listOf("CranberrySoup", "sika200581")
 
     status = 1
@@ -9,5 +9,10 @@ cloudstream {
     tvTypes = listOf("Live")
     iconUrl = "https://www.google.com/s2/favicons?domain=twitch.tv&sz=%size%"
 
-    isCrossPlatform = true
+    // Android-only so plugin settings (AlertDialog) are available
+    isCrossPlatform = false
+}
+
+dependencies {
+    compileOnly(project(":stubslib"))
 }

@@ -32,6 +32,10 @@ fun Project.cloudstream(configuration: CloudstreamExtension.() -> Unit) = extens
 fun Project.android(configuration: BaseExtension.() -> Unit) = extensions.getByName<BaseExtension>("android").configuration()
 
 subprojects {
+    if (name == "stubslib") {
+        // Plain Android stubs only — not a CloudStream plugin module
+        return@subprojects
+    }
     apply(plugin = "com.android.library")
     apply(plugin = "kotlin-android")
     apply(plugin = "com.lagradost.cloudstream3.gradle")
@@ -70,7 +74,6 @@ subprojects {
 
     dependencies {
         val implementation by configurations
-
         implementation("com.github.recloudstream.cloudstream:library:-SNAPSHOT")
 
         // These dependencies can include any of those which are added by the app,

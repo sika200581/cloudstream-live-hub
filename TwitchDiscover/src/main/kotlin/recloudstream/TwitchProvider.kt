@@ -1,5 +1,7 @@
 package recloudstream
 
+import android.content.Context
+import android.content.SharedPreferences
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.HomePageList
 import com.lagradost.cloudstream3.HomePageResponse
@@ -47,16 +49,16 @@ class TwitchProvider : MainAPI() {
 
     private val categoriesSection = "Category directory"
 
-    override val mainPage = mainPageOf(
-        "categories" to categoriesSection,
-        "streams" to "Top live worldwide",
-        "streams:EN" to "Top English",
-        "streams:AR" to "Top Arabic",
-        "streams:ES" to "Top Spanish",
-        "streams:PT" to "Top Portuguese",
-        "streams:FR" to "Top French",
-        "streams:DE" to "Top German",
-    )
+    override val mainPage
+        get() = mainPageOf(
+            *buildList {
+                add("categories" to categoriesSection)
+                add("streams" to "Top live worldwide")
+                for (code in getEnabledHomeLanguages()) {
+                    add("streams:$code" to "Top ${languageLabel(code)}")
+                }
+            }.toTypedArray()
+        )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         return when (request.data) {
@@ -117,9 +119,10 @@ class TwitchProvider : MainAPI() {
             ?: throw RuntimeException("Could not load category")
 
         val boxArt = boxArtUrl(game.boxArtURL)
-        // Episodes = per-stream rows with live_user thumbnails.
-        // CloudStream recommendations UI is poster-style and ignores homepage
-        // isHorizontalImages — episodes are the closest to homepage cards.
+        val streamCards = game.streams.map { it.toStreamCard() }
+
+        // TvType.Live hid the episode list in CloudStream. TvSeries shows episodes
+        // as a proper list; each episode poster is the live_user stream thumbnail.
         val episodes = game.streams.mapIndexed { index, stream ->
             val login = stream.broadcaster?.login.orEmpty()
             val display = stream.broadcaster?.displayName?.ifBlank { login } ?: login
@@ -134,31 +137,34 @@ class TwitchProvider : MainAPI() {
                 }
             }
             newEpisode("https://www.twitch.tv/$login") {
-                name = epName
-                posterUrl = previewUrl(login)
-                episode = index + 1
-                season = 1
+                this.name = epName
+                this.posterUrl = previewUrl(login)
+                this.episode = index + 1
+                this.season = 1
+                this.description = title.ifBlank { null }
             }
         }
 
         return newTvSeriesLoadResponse(
             game.name,
             "$mainUrl$categoryPath$gameId",
-            TvType.Live,
+            TvType.TvSeries,
             episodes
         ) {
             plot = buildString {
-                append("Live category on Twitch")
+                append("Live streams in this Twitch category")
                 game.viewersCount?.let { append(" · ${formatViewers(it)} watching") }
-                append("\nPick a stream below.")
             }
             posterUrl = boxArt
             backgroundPosterUrl = boxArt
             tags = listOfNotNull(
                 "Category",
+                "Live",
                 game.viewersCount?.let { formatViewers(it) + " viewers" },
                 "${episodes.size} live"
             )
+            // Backup row if a CS build still prefers related:
+            recommendations = streamCards
         }
     }
 
@@ -541,6 +547,57 @@ class TwitchProvider : MainAPI() {
         @JsonProperty("previewImageURL") val previewImageURL: String? = null,
         @JsonProperty("game") val game: GameRef? = null,
     )
+
+
+    companion object {
+        private const val LANG_PREF_KEY = "TwitchDiscover_home_languages"
+
+        val ALL_HOME_LANGUAGES = listOf(
+            "EN", "AR", "ES", "PT", "FR", "DE", "JA", "KO", "RU", "IT", "TR", "PL"
+        )
+        val DEFAULT_HOME_LANGUAGES = setOf("EN", "AR", "ES", "PT", "FR", "DE")
+
+        fun languageLabel(code: String): String = when (code.uppercase(Locale.ROOT)) {
+            "EN" -> "English"
+            "AR" -> "Arabic"
+            "ES" -> "Spanish"
+            "PT" -> "Portuguese"
+            "FR" -> "French"
+            "DE" -> "German"
+            "JA" -> "Japanese"
+            "KO" -> "Korean"
+            "RU" -> "Russian"
+            "IT" -> "Italian"
+            "TR" -> "Turkish"
+            "PL" -> "Polish"
+            else -> code
+        }
+
+        private fun prefs(): SharedPreferences? {
+            return try {
+                val app = Class.forName("android.app.ActivityThread")
+                    .getMethod("currentApplication")
+                    .invoke(null) as? Context
+                app?.getSharedPreferences("TwitchDiscover", Context.MODE_PRIVATE)
+            } catch (_: Throwable) {
+                null
+            }
+        }
+
+        fun getEnabledHomeLanguages(): Set<String> {
+            val raw = prefs()?.getString(LANG_PREF_KEY, null)
+            if (raw.isNullOrBlank()) return DEFAULT_HOME_LANGUAGES
+            val parsed = raw.split(',').map { it.trim().uppercase(Locale.ROOT) }.filter { it.isNotEmpty() }.toSet()
+            return parsed.ifEmpty { DEFAULT_HOME_LANGUAGES }
+        }
+
+        fun setEnabledHomeLanguages(langs: Set<String>) {
+            val value = langs.map { it.uppercase(Locale.ROOT) }.filter { it.isNotEmpty() }
+                .ifEmpty { listOf("EN") }
+                .joinToString(",")
+            prefs()?.edit()?.putString(LANG_PREF_KEY, value)?.apply()
+        }
+    }
 
     class TwitchExtractor : ExtractorApi() {
         override val mainUrl = "https://twitch.tv/"

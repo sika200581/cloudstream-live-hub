@@ -1,7 +1,8 @@
 rootProject.name = "CloudstreamPlugins"
 
-// Auto-include every provider module that has a build.gradle.kts
-val disabled = listOf<String>()
+include("stubslib")
+
+val disabled = listOf("stubslib", "stubs", "build")
 
 File(rootDir, ".").eachDir { dir ->
     if (!disabled.contains(dir.name) && File(dir, "build.gradle.kts").exists()) {
