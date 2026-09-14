@@ -1,50 +1,35 @@
-# CloudStream Twitch Extension
+# CloudStream Twitch Discover
 
-CloudStream 3 plugin for **Twitch livestreams** (`TvType.Live`). Browse top streams and games, search channels, and play live m3u8 qualities.
+Improved Twitch **Live** extension for CloudStream 3 — denser homepage and better discoverability than the stock one-row provider.
 
-Based on the official [recloudstream/extensions](https://github.com/recloudstream/extensions) `TwitchProvider` (author: CranberrySoup).
+## What’s better
 
-## Features
+- Homepage sections: worldwide, English / Arabic / Spanish / Portuguese / French / German
+- Top games expanded into their own rows (up to 10 categories)
+- Card titles include viewer counts (`Name · 37.8K`)
+- Channel pages show game, language, viewers, rank as tags
+- Search covers channels and matching game categories
 
-- Homepage: top global live streams + top games
-- Search channels via TwitchTracker scrape
-- Live stream playback through a Twitch extractor
+Forked from the official [recloudstream/extensions](https://github.com/recloudstream/extensions) `TwitchProvider` (CranberrySoup).
+
+## Install in CloudStream
+
+Repository URL:
+
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
+
+Then install **TwitchProvider** (shown as **Twitch Discover**).
 
 ## Build
-
-Requirements: JDK 17+, Android SDK (for the CloudStream gradle plugin).
 
 ```bash
 ./gradlew TwitchProvider:make
 ```
 
-Output plugin artifacts land under `TwitchProvider/build/` (and typically a `.cs3` / plugin zip used by CloudStream).
-
-Optional ADB deploy to a device with CloudStream installed:
-
-```bash
-./gradlew TwitchProvider:deployWithAdb
-```
-
-## Install in CloudStream
-
-**Local build**
-
-1. Build with `./gradlew TwitchProvider:make`
-2. Copy the generated plugin into CloudStream (Extensions → install from file / local), or use `deployWithAdb`
-
-**Repository URL** (after you publish a `builds/plugins.json` via CI)
-
-Add this raw `repo.json` URL in CloudStream → Extensions → Add repository:
-
-`https://cdn.jsdelivr.net/gh/sika200581/cloudstream-twitch-extension@main/repo.json`
+Requires JDK 17 + Android SDK. CI workflow needs a GitHub token with `workflow` scope if you want automated `builds/` publishing.
 
 ## Notes
 
-- Live Twitch only — not movies/TV VODs as catalog content
-- Catalog scrape uses [twitchtracker.com](https://twitchtracker.com); playback resolves `twitch.tv` URLs
-- If streams fail to load, the upstream stream-resolver endpoint may need updating in `TwitchProvider.kt` (`TwitchExtractor`)
-
-## License
-
-Follows the upstream CloudStream extensions project licensing for the provider code adapted here.
+- Live Twitch only
+- Catalog data via [twitchtracker.com](https://twitchtracker.com)
+- Playback still uses the Twitch extractor (`twitch.tv` → m3u8)

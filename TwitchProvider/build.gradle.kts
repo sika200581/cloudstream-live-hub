@@ -1,17 +1,9 @@
-// Use an integer for version numbers
-version = 2
+version = 3
 
 cloudstream {
-    description = "Watch livestreams from Twitch"
+    description = "Twitch Discover — languages, top games, viewer counts, and richer search"
     authors = listOf("CranberrySoup", "sika200581")
 
-    /**
-     * Status int as one of the following:
-     * 0: Down
-     * 1: Ok
-     * 2: Slow
-     * 3: Beta-only
-     */
     status = 1
 
     tvTypes = listOf("Live")
