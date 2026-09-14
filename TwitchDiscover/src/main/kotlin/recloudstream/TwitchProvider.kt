@@ -15,6 +15,8 @@ import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.newHomePageResponse
 import com.lagradost.cloudstream3.newLiveSearchResponse
 import com.lagradost.cloudstream3.newLiveStreamLoadResponse
+import com.lagradost.cloudstream3.newTvSeriesLoadResponse
+import com.lagradost.cloudstream3.newEpisode
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
@@ -46,6 +48,7 @@ class TwitchProvider : MainAPI() {
     private val categoriesSection = "Category directory"
 
     override val mainPage = mainPageOf(
+        "categories" to categoriesSection,
         "streams" to "Top live worldwide",
         "streams:EN" to "Top English",
         "streams:AR" to "Top Arabic",
@@ -53,7 +56,6 @@ class TwitchProvider : MainAPI() {
         "streams:PT" to "Top Portuguese",
         "streams:FR" to "Top French",
         "streams:DE" to "Top German",
-        "categories" to categoriesSection,
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -114,28 +116,49 @@ class TwitchProvider : MainAPI() {
         val game = fetchGameWithStreams(gameId, maxStreams)
             ?: throw RuntimeException("Could not load category")
 
-        val streamCards = game.streams.map { it.toStreamCard() }
         val boxArt = boxArtUrl(game.boxArtURL)
+        // Episodes = per-stream rows with live_user thumbnails.
+        // CloudStream recommendations UI is poster-style and ignores homepage
+        // isHorizontalImages — episodes are the closest to homepage cards.
+        val episodes = game.streams.mapIndexed { index, stream ->
+            val login = stream.broadcaster?.login.orEmpty()
+            val display = stream.broadcaster?.displayName?.ifBlank { login } ?: login
+            val title = stream.title?.trim().orEmpty()
+            val viewers = stream.viewersCount
+            val epName = buildString {
+                append(display)
+                if (viewers != null) append(" · ").append(formatViewers(viewers))
+                if (title.isNotBlank()) {
+                    append('\n')
+                    append(title.truncate(70))
+                }
+            }
+            newEpisode("https://www.twitch.tv/$login") {
+                name = epName
+                posterUrl = previewUrl(login)
+                episode = index + 1
+                season = 1
+            }
+        }
 
-        return newLiveStreamLoadResponse(
+        return newTvSeriesLoadResponse(
             game.name,
-            "$mainUrl/directory/category/${game.name}",
-            // No single playable link for a category — first live stream if any
-            game.streams.firstOrNull()?.broadcaster?.login?.let { "https://www.twitch.tv/$it" } ?: mainUrl
+            "$mainUrl$categoryPath$gameId",
+            TvType.Live,
+            episodes
         ) {
             plot = buildString {
                 append("Live category on Twitch")
                 game.viewersCount?.let { append(" · ${formatViewers(it)} watching") }
-                append("\n\nOpen a stream below (recommendations).")
+                append("\nPick a stream below.")
             }
             posterUrl = boxArt
             backgroundPosterUrl = boxArt
             tags = listOfNotNull(
                 "Category",
                 game.viewersCount?.let { formatViewers(it) + " viewers" },
-                "${streamCards.size} live"
+                "${episodes.size} live"
             )
-            recommendations = streamCards
         }
     }
 
