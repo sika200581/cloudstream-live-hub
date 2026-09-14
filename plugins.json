@@ -80,7 +80,7 @@
         "version": 4,
         "internalName": "RumbleDiscover",
         "description": "Rumble Discover - fast live browse (resolve on play)",
-        "url": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/RumbleDiscover.cs3",
+        "url": "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/RumbleDiscover-v4.cs3",
         "name": "RumbleDiscover",
         "language": "uni"
     }
