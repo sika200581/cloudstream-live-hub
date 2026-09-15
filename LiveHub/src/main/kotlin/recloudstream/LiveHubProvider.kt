@@ -15,6 +15,13 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 /**
  * Live Hub — single provider homepage that aggregates top live rows from
  * Twitch, Kick, YouTube Live, and Rumble via internal child providers.
+ *
+ * Children are *not* registered as MainAPIs. Their [MainAPI.name] must equal
+ * this provider's name so SearchResponse/LoadResponse apiName resolves to
+ * "Live Hub" (CloudStream looks up providers by apiName; wrong names cause
+ * "This provider does not exist"). Playback stays on LiveHubProvider which
+ * routes load/loadLinks to the matching child; Twitch/Kick extractors are
+ * registered by [LiveHubPlugin].
  */
 class LiveHubProvider : MainAPI() {
     override var name = "Live Hub"
@@ -23,10 +30,11 @@ class LiveHubProvider : MainAPI() {
     override val supportedTypes = setOf(TvType.Live, TvType.TvSeries, TvType.Movie)
     override val hasMainPage = true
 
-    private val twitch = TwitchProvider()
-    private val kick = KickProvider()
-    private val youtube = YouTubeLiveProvider()
-    private val rumble = RumbleProvider()
+    // Stamp hub name so cards/load responses never claim an unregistered provider.
+    private val twitch = TwitchProvider().apply { name = HUB_NAME }
+    private val kick = KickProvider().apply { name = HUB_NAME }
+    private val youtube = YouTubeLiveProvider().apply { name = HUB_NAME }
+    private val rumble = RumbleProvider().apply { name = HUB_NAME }
 
     override val mainPage = mainPageOf(
         "twitch" to "Twitch · Top worldwide",
@@ -67,7 +75,12 @@ class LiveHubProvider : MainAPI() {
         }
     }.distinctBy { it.url }.take(40)
 
-    override suspend fun load(url: String): LoadResponse? = route(url).load(url)
+    override suspend fun load(url: String): LoadResponse? {
+        val resp = route(url).load(url) ?: return null
+        // Belt-and-suspenders: LoadResponse.apiName is mutable.
+        resp.apiName = HUB_NAME
+        return resp
+    }
 
     override suspend fun loadLinks(
         data: String,
@@ -75,4 +88,8 @@ class LiveHubProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean = route(data).loadLinks(data, isCasting, subtitleCallback, callback)
+
+    companion object {
+        const val HUB_NAME = "Live Hub"
+    }
 }

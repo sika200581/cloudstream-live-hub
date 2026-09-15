@@ -43,15 +43,15 @@ Forked from the official [recloudstream/extensions](https://github.com/recloudst
 ### LiveHub (aggregator)
 - **One** CloudStream source named **Live Hub** (not four separate providers)
 - Homepage rows: **Twitch · Top worldwide** · **Kick · Top worldwide** · **YouTube · Top live** · **Rumble · Top live** (sorted by viewer count)
-- Opens cards via the matching platform provider for load/playback
-- Registers Twitch + Kick extractors for HLS playback
+- Internal platform helpers share the **Live Hub** apiName so cards resolve without installing standalones
+- Playback routed inside LiveHub (Twitch/Kick extractors registered; YouTube via app `loadExtractor`; Rumble embed/HLS in-provider)
 - Standalone plugins (TwitchDiscover / KickDiscover / YouTubeLiveDiscover / RumbleDiscover) remain available
 
 ## Install in CloudStream
 
-Repository URL (v19 — standalones + **LiveHub** aggregator; LiveDiscover removed):
+Repository URL (v20 — standalones + **LiveHub** aggregator; LiveDiscover removed):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v19.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v20.json`
 
 Or latest pointer:
 
