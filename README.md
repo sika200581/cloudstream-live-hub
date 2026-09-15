@@ -39,17 +39,25 @@ Forked from the official [recloudstream/extensions](https://github.com/recloudst
 - Cards: `/__discover_video__/{shortId}` (not `/embed/`); title/channel/thumb from embedJS
 - Playback: HLS from `embedJS/u3/?v={shortId}`; warm-up hits `/browse/live` so watch HTML returns 200
 
+
+### LiveHub (aggregator)
+- **One** CloudStream source named **Live Hub** (not four separate providers)
+- Homepage rows: Twitch (top live) · Kick (top live) · YouTube Live (trending) · Rumble (live now)
+- Opens cards via the matching platform provider for load/playback
+- Registers Twitch + Kick extractors for HLS playback
+- Standalone plugins (TwitchDiscover / KickDiscover / YouTubeLiveDiscover / RumbleDiscover) and LiveDiscover are unchanged
+
 ## Install in CloudStream
 
-Repository URL (v14 — TwitchDiscover + KickDiscover + YouTubeLiveDiscover + RumbleDiscover):
+Repository URL (v18 — standalones + LiveDiscover + **LiveHub** aggregator):
 
-`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v14.json`
+`https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo-v18.json`
 
 Or latest pointer:
 
 `https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/repo.json`
 
-Then install **TwitchDiscover**, **KickDiscover**, **YouTubeLiveDiscover**, and/or **RumbleDiscover**.
+Then install **LiveHub** for the single combined homepage, and/or the standalones (**TwitchDiscover**, **KickDiscover**, **YouTubeLiveDiscover**, **RumbleDiscover**). LiveDiscover remains available as the four-provider bundle.
 
 ## Build
 
@@ -58,6 +66,7 @@ Then install **TwitchDiscover**, **KickDiscover**, **YouTubeLiveDiscover**, and/
 ./gradlew :KickDiscover:make
 ./gradlew :YouTubeLiveDiscover:make
 ./gradlew :RumbleDiscover:make
+./gradlew :LiveHub:make
 ```
 
 Requires JDK 17 + Android SDK. Plugins with settings are Android-only (`isCrossPlatform = false`) so AlertDialog settings work.
