@@ -1,8 +1,0 @@
-{
-  "name": "Twitch, Kick & YouTube Live Discover",
-  "description": "Twitch, Kick, and YouTube Live discover for CloudStream",
-  "manifestVersion": 1,
-  "pluginLists": [
-    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/plugins-v11.json"
-  ]
-}

@@ -1,8 +1,0 @@
-{
-  "name": "Twitch Discover",
-  "description": "Twitch / Kick / YouTube Live / Rumble for CloudStream",
-  "manifestVersion": 1,
-  "pluginLists": [
-    "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/plugins-v20.json"
-  ]
-}

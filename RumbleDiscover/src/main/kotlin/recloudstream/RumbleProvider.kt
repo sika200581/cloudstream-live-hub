@@ -46,7 +46,7 @@ class RumbleProvider : MainAPI() {
     private val videoPath = "/__discover_video__/"
 
     private val liveFeedUrl =
-        "https://raw.githubusercontent.com/sika200581/cloudstream-twitch-extension/main/rumble-live.json"
+        "https://raw.githubusercontent.com/sika200581/cloudstream-live-hub/main/rumble-live.json"
 
     private val htmlHeaders = mapOf(
         "User-Agent" to USER_AGENT,

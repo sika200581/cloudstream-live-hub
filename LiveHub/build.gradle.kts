@@ -1,13 +1,13 @@
-version = 3
+version = 4
 
 cloudstream {
-    description = "Live Hub - top streams from Twitch, Kick, YouTube Live & Rumble"
+    description = "All top live streams in one place — Twitch, Kick, YouTube Live, Rumble"
     authors = listOf("sika200581")
 
     status = 1
 
     tvTypes = listOf("Live", "TvSeries", "Movie")
-    iconUrl = "https://www.google.com/s2/favicons?domain=twitch.tv&sz=%size%"
+    iconUrl = "https://raw.githubusercontent.com/sika200581/cloudstream-live-hub/main/assets/icon-live-hub.png"
 
     // Android Context/SharedPreferences — not cross-platform JAR
     isCrossPlatform = false
