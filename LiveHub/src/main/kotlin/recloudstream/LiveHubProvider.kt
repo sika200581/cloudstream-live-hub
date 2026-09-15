@@ -29,10 +29,10 @@ class LiveHubProvider : MainAPI() {
     private val rumble = RumbleProvider()
 
     override val mainPage = mainPageOf(
-        "twitch" to "Twitch",
-        "kick" to "Kick",
-        "youtube" to "YouTube Live",
-        "rumble" to "Rumble",
+        "twitch" to "Twitch · Top worldwide",
+        "kick" to "Kick · Top worldwide",
+        "youtube" to "YouTube · Top live",
+        "rumble" to "Rumble · Top live",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {

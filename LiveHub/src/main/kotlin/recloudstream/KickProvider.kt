@@ -99,7 +99,9 @@ class KickProvider : MainAPI() {
                     fetchLivestreams(maxStreams)
                 } else {
                     fetchLivestreamsFiltered(langFetchLimit, langCode).take(maxStreams)
-                }.map { it.toStreamCard() }
+                }
+                    .sortedByDescending { it.viewerCount ?: 0 }
+                    .map { it.toStreamCard() }
                 newHomePageResponse(
                     listOf(
                         HomePageList(

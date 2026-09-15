@@ -191,7 +191,9 @@ class YouTubeLiveProvider : MainAPI() {
                 "params" to liveBrowseParams,
             )
         ) ?: return emptyList()
-        return parseLiveVideos(root).take(limit)
+        return parseLiveVideos(root)
+            .sortedByDescending { it.viewerCount ?: 0L }
+            .take(limit)
     }
 
     private suspend fun searchLive(query: String, limit: Int): List<LiveItem> {

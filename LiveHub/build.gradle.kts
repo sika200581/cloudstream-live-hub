@@ -1,4 +1,4 @@
-version = 1
+version = 2
 
 cloudstream {
     description = "Live Hub - top streams from Twitch, Kick, YouTube Live & Rumble"

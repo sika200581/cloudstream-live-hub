@@ -1,24 +1,15 @@
 {
-  "updatedAt": "2026-09-14T13:19:05Z",
+  "updatedAt": "2026-09-15T10:40:30Z",
   "source": "browse/live",
   "lives": [
     {
-      "id": "v5xwnen",
-      "title": "NEWSMAX2 LIVE | Real News for Real People",
-      "author": "NEWSMAX",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/P/d/4/O/Pd4Ov.qR4e.i-small-NEWSMAX2-LIVE-Real-News-for..jpg",
-      "page": "https://rumble.com/v60552h-newsmax2-live-real-news-for-real-people.html",
-      "viewers": 66346531,
-      "hls": "https://rumble.com/live-hls-dvr/jvVgrKOVyc8/playlist.m3u8"
-    },
-    {
-      "id": "v33aw1a",
-      "title": "RT News | Livestream 24/7",
-      "author": "RT",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/cwg9/s8/1/m/9/W/z/m9Wzl.qR4e-small-RT-News-Livestream-247.jpg",
-      "page": "https://rumble.com/v35waq4-rt-news-livestream-247.html",
-      "viewers": 53145677,
-      "hls": "https://rumble.com/live-hls/K1qPNn6FJUg/playlist.m3u8"
+      "id": "v7dci1a",
+      "title": "RT DE LIVE-TV",
+      "author": "RT DE",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/9c/s8/6/e/H/f/Y/eHfYA.qR4e.3u.jpg",
+      "page": "https://rumble.com/v7fiuys-rt-de-live-tv.html",
+      "viewers": 1730,
+      "hls": "https://rumble.com/live-hls-dvr/20p0vFFSzLQ/playlist.m3u8"
     },
     {
       "id": "v7capuk",
@@ -26,7 +17,7 @@
       "author": "The Alex Jones Show Live",
       "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/da/s8/1/0/N/g/A/0NgAA.qR4e-small-Alex-Jones-Live..jpg",
       "page": "https://rumble.com/v7eh2s2-alex-jones-live-8-21-26.html",
-      "viewers": 3352176,
+      "viewers": 1290,
       "hls": "https://rumble.com/live-hls-dvr/5RH_b6bktP8/playlist.m3u8"
     },
     {
@@ -35,8 +26,44 @@
       "author": "RealAmericasVoice",
       "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/13/s8/1/-/F/x/R/-FxRA.qR4e-small-HOME-OF-REAL-NEWS-and-HONES..jpg",
       "page": "https://rumble.com/v7eh3we-home-of-real-news-and-honest-views.html",
-      "viewers": 1187118,
+      "viewers": 867,
       "hls": "https://rumble.com/live-hls-dvr/cPSw6R-fVhE/playlist.m3u8"
+    },
+    {
+      "id": "v33aw1a",
+      "title": "RT News | Livestream 24/7",
+      "author": "RT",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/cwg9/s8/1/m/9/W/z/m9Wzl.qR4e-small-RT-News-Livestream-247.jpg",
+      "page": "https://rumble.com/v35waq4-rt-news-livestream-247.html",
+      "viewers": 579,
+      "hls": "https://rumble.com/live-hls/K1qPNn6FJUg/playlist.m3u8"
+    },
+    {
+      "id": "v5xwnen",
+      "title": "NEWSMAX2 LIVE | Real News for Real People",
+      "author": "NEWSMAX",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/P/d/4/O/Pd4Ov.qR4e.i-small-NEWSMAX2-LIVE-Real-News-for..jpg",
+      "page": "https://rumble.com/v60552h-newsmax2-live-real-news-for-real-people.html",
+      "viewers": 416,
+      "hls": "https://rumble.com/live-hls-dvr/jvVgrKOVyc8/playlist.m3u8"
+    },
+    {
+      "id": "v7dco92",
+      "title": "TAYLOR SWIFT TURNING TO SCIENTOLOGY?! - Bubba the Love Sponge\u00ae Show | 9/15/2026",
+      "author": "Bubba the Love Sponge\u00ae Show",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/a3/s8/1/8/E/h/Y/8EhYA.qR4e-small-TAYLOR-SWIFT-TURNING-TO-SCI..jpg",
+      "page": "https://rumble.com/v7fj16k-taylor-swift-turning-to-scientology-bubba-the-love-sponge-show-9152026.html",
+      "viewers": 392,
+      "hls": "https://rumble.com/live-hls/q236ILloxmM/playlist.m3u8"
+    },
+    {
+      "id": "v7dbdjo",
+      "title": "Patriots' Soapbox NEWS - LIVE 24/7!",
+      "author": "PSBNews",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/37/s8/6/k/T/4/X/kT4XA.qR4e.c9.jpg",
+      "page": "https://rumble.com/v7fhqh6-patriots-soapbox-news-live-247.html",
+      "viewers": 318,
+      "hls": "https://rumble.com/live-hls-dvr/4L1NleEDn3M/playlist.m3u8"
     },
     {
       "id": "v7cboku",
@@ -44,35 +71,26 @@
       "author": "His Glory TV",
       "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/B/B/Z/J/BBZJq.qR4e-small-HisGlory.me-247.jpg",
       "page": "https://rumble.com/v7ei1ic-hisglory.me-247.html",
-      "viewers": 917181,
+      "viewers": 206,
       "hls": "https://rumble.com/live-hls/Bt3r291ocs8/playlist.m3u8"
     },
     {
-      "id": "v7db0j2",
-      "title": "RT DE LIVE-TV",
-      "author": "RT DE",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/cf/s8/6/K/L/0/X/KL0XA.qR4e.30.jpg",
-      "page": "https://rumble.com/v7fhdgk-rt-de-live-tv.html",
-      "viewers": 121009,
-      "hls": "https://rumble.com/live-hls-dvr/ioMK6nEwyP4/playlist.m3u8"
+      "id": "v7dcnpq",
+      "title": "DAYBREAK WITH STEVE & IVEY GRUBER",
+      "author": "RealAmericasVoice",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/a8/s8/1/e/u/h/Y/euhYA.qR4e-small-DAYBREAK-WITH-STEVE-and-IVE..jpg",
+      "page": "https://rumble.com/v7fj0n8-daybreak-with-steve-and-ivey-gruber.html",
+      "viewers": 168,
+      "hls": "https://rumble.com/live-hls-dvr/OxwaQNlovVM/playlist.m3u8"
     },
     {
-      "id": "v7d8ml2",
-      "title": "REWIND: Bo Polny + Bill Federer + Mark Mitchell + Clay Clark + Richard Gage + Prophetic Report | The Flyover Show 24-Hour Marathon",
-      "author": "Flyover Conservatives",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/98/s8/1/s/l/n/J/slnJA.qR4e-small-REWIND-24-hour-Marathon..jpg",
-      "page": "https://rumble.com/v7fezik-rewind-24-hour-marathon.html",
-      "viewers": 51647,
-      "hls": "https://rumble.com/live-hls-dvr/f-Sk1I9LO2o/playlist.m3u8"
-    },
-    {
-      "id": "v7daruu",
-      "title": "LIVE & BREAKING NEWS! | MONDAY 9/14/26",
+      "id": "v7d9xdi",
+      "title": "LFA TV REPLAY MONDAY 9.14.26 8PM",
       "author": "LFA TV",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/80/s8/1/8/1/X/X/81XXA.qR4e.2-small-LIVE-and-BREAKING-NEWS-MOND..jpg",
-      "page": "https://rumble.com/v7fh4sc-live-and-breaking-news-monday-91426.html",
-      "viewers": 30309,
-      "hls": "https://rumble.com/live-hls-dvr/n_3dILxTbf0/playlist.m3u8"
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/a6/s8/1/S/m/O/X/SmOXA.qR4e-small-LFA-TV-REPLAY-MONDAY-9.14.2..jpg",
+      "page": "https://rumble.com/v7fgab0-lfa-tv-replay-monday-9.14.26-8pm.html",
+      "viewers": 152,
+      "hls": "https://rumble.com/live-hls-dvr/mxiyYuiE0sI/playlist.m3u8"
     },
     {
       "id": "v7d8av8",
@@ -80,152 +98,233 @@
       "author": "ALEX JONES NETWORK LIVE - ALEX JONES LIVE - THERE'S A WAR ON FOR YOUR MIND!",
       "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/72/s8/1/g/m/w/n/gmwnA.qR4e-small-ALEX-JONES-NETWORK-LIVE-THE..jpg",
       "page": "https://rumble.com/v7fensq-alex-jones-network-live-theres-a-war-on-for-your-mind.html",
-      "viewers": 10922,
+      "viewers": 124,
       "hls": "https://rumble.com/live-hls-dvr/9d_8knStJXA/playlist.m3u8"
     },
     {
       "id": "v7d9ry2",
       "title": "\ud83d\udd34 [HD+] Electronic Music Experience from Clubs, Events, Festivals and Studio Sessions \ud83c\udfa7\ud83c\udfb6",
       "author": "HotBeatsTV",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/58/s8/6/W/E/M/X/WEMXA.qR4e.fm.jpg",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/58/s8/6/W/E/M/X/WEMXA.qR4e.r2.jpg",
       "page": "https://rumble.com/v7fg4vk--hd-electronic-music-experience-from-clubs-events-festivals-and-studio-sess.html",
-      "viewers": 4397,
+      "viewers": 116,
       "hls": "https://rumble.com/live-hls/8jpkX0fqVR0/playlist.m3u8"
     },
     {
-      "id": "v7db24a",
-      "title": "\ud83d\udd25 Charlie Kirk: 1 Year Later \ud83c\uddfa\ud83c\uddf8 Aaron Rodgers Speaks \ud83c\udfc8 Fibromyalgia & Fascia Revealed \ud83e\uddec",
-      "author": "Redpill Project",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/94/s8/1/W/f/1/X/Wf1XA.qR4e-small--Charlie-Kirk-1-Year-Later-..jpg",
-      "page": "https://rumble.com/v7fhf1s--charlie-kirk-1-year-later-aaron-rodgers-speaks-fibromyalgia-and-fascia-rev.html",
-      "viewers": 3548,
-      "hls": "https://rumble.com/live-hls-dvr/qRS5LmlCnJM/playlist.m3u8"
+      "id": "v7dc4bm",
+      "title": "They're Still Pushing The Manmade Global Warming Hoax",
+      "author": "The Chris Salcedo Show",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/b2/s8/1/y/l/b/Y/ylbYA.qR4e-small-Theyre-Still-Pushing-The-Ma..jpg",
+      "page": "https://rumble.com/v7fih94-theyre-still-pushing-the-manmade-global-warming-hoax.html",
+      "viewers": 91,
+      "hls": "https://rumble.com/live-hls-dvr/WLsG9ttCoA8/playlist.m3u8"
     },
     {
-      "id": "v7db6zs",
-      "title": "LONE JUROR TARGETED! - Bubba the Love Sponge\u00ae Show | 9/14/2026",
-      "author": "Bubba the Love Sponge\u00ae Show",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/c9/s8/1/E/O/2/X/EO2XA.qR4e-small-LONE-JUROR-TARGETED-Bubba-t..jpg",
-      "page": "https://rumble.com/v7fhjxa-lone-juror-targeted-bubba-the-love-sponge-show-9142026.html",
-      "viewers": 3207,
-      "hls": "https://rumble.com/live-hls/bbtF8l-iheQ/playlist.m3u8"
+      "id": "v2lh8yh",
+      "title": "Synthwave Radio \ud83c\udf0c - beats to chill/game to",
+      "author": "Lofi Girl",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/9/F/K/N/9FKNj.qR4e-small-synthwave-radio-beats-to-ch.jpg",
+      "page": "https://rumble.com/v2o2oe5-synthwave-radio-beats-to-chillgame-to.html",
+      "viewers": 87,
+      "hls": "https://rumble.com/live-hls/cq3hNek9b9U/playlist.m3u8"
     },
     {
-      "id": "v7db6qc",
-      "title": "NY forgets, Talarico tall tales, Charlie Kirk statue vandalized, Clancy psychos",
-      "author": "Chicks On The Right",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/b9/s8/1/6/f/h/L/6fhLx.qR4e-small-Chicks-on-the-Right-LIVE.jpg",
-      "page": "https://rumble.com/v7fhjnu-ny-forgets-talarico-tall-tales-charlie-kirk-statue-vandalized-clancy-psycho.html",
-      "viewers": 2515,
-      "hls": "https://rumble.com/live-hls-dvr/FnvJnTLF_Y8/playlist.m3u8"
+      "id": "v7d79gq",
+      "title": "The Alex Jones Show MONDAY LIVE SHOW STREAM 9/14/26",
+      "author": "The Alex Jones Show",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/06/s8/6/G/2/j/X/G2jXA.qR4e.1us.jpg",
+      "page": "https://rumble.com/v7fdme8-the-alex-jones-show-friday-live-show-stream-91126.html",
+      "viewers": 80,
+      "hls": "https://rumble.com/live-hls-dvr/WiFYmcaF80M/playlist.m3u8"
     },
     {
-      "id": "v7dapz8",
-      "title": "ILHAN OMAR\u2019S BROTHER, THE JUROR THEY WANT SILENCED & AI IS COMING FOR US! STMS 09-14-26",
-      "author": "Steel Toe Morning Show",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/2d/s8/1/6/p/X/X/6pXXA.qR4e-small-ILHAN-OMARS-BROTHER-THE-JUR..jpg",
-      "page": "https://rumble.com/v7fh2wq-ilhan-omars-brother-the-juror-they-want-silenced-and-ai-is-coming-for-us-st.html",
-      "viewers": 2389,
-      "hls": "https://rumble.com/live-hls-dvr/Gt6PrzSPEYA/playlist.m3u8"
+      "id": "v7d51rk",
+      "title": "BREAKING: AI Companies Warn Of Surge In Cyberattacks Within Months! \u201cBrace Yourselves For The Cyber Attack To Be Blamed On A Loose Bad AI Or The Russians & Chinese To Bring In This Control!\u201d",
+      "author": "AJNLive",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/65/s8/1/Q/g/v/5/Qgv5z.qR4e.4-small-The-Alex-Jones-Show-Live..jpg",
+      "page": "https://rumble.com/v7fbep2-the-alex-jones-show-live.html",
+      "viewers": 76,
+      "hls": "https://rumble.com/live-hls-dvr/DJLFC8pdg-U/playlist.m3u8"
     },
     {
-      "id": "v7d9jhw",
-      "title": "AWAKE NATION LIVE: 09.14.2026",
-      "author": "The David Zublick Channel",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/51/s8/1/Q/Z/J/X/QZJXA.qR4e-small-AWAKE-NATION-LIVE-09.14.202..jpg",
-      "page": "https://rumble.com/v7ffwfe-awake-nation-live-09.14.2026.html",
-      "viewers": 1994,
-      "hls": "https://rumble.com/live-hls/y6UUI2GM3Qg/playlist.m3u8"
+      "id": "v7bhj6q",
+      "title": "LindellTV 24/7",
+      "author": "LindellTV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/b0/s8/1/o/R/m/M/oRmMA.qR4e-small-LindellTV-247..jpg",
+      "page": "https://rumble.com/v7do2by-lindelltv-247.html",
+      "viewers": 75,
+      "hls": "https://rumble.com/live-hls-dvr/fRvi6QnCGzo/playlist.m3u8"
     },
     {
-      "id": "v7datgo",
-      "title": "TRUMP UNLEASHES $5K DIVIDEND, HOUSE FORCES BIG TECH TO PAY | AMERICAN SUNRISE",
-      "author": "RealAmericasVoice",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/f7/s8/1/E/w/Y/X/EwYXA.qR4e-small-TRUMP-UNLEASHES-5K-DIVIDEND..jpg",
-      "page": "https://rumble.com/v7fh6e6-trump-unleashes-5k-dividend-house-forces-big-tech-to-pay-american-sunrise.html",
-      "viewers": 1970,
-      "hls": "https://rumble.com/live-hls-dvr/UqXSCKFeuGA/playlist.m3u8"
+      "id": "v7dcoam",
+      "title": "The Steve Gruber Show",
+      "author": "The Steve Gruber Show",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/0/i/D/r/0iDrr.qR4e-small-The-Steve-Gruber-Show.jpg",
+      "page": "https://rumble.com/v7fj184-the-steve-gruber-show.html",
+      "viewers": 73,
+      "hls": "https://rumble.com/live-hls/QvLpTfJ0wOU/playlist.m3u8"
     },
     {
-      "id": "v7db9kc",
-      "title": "[\uc548\uc815\uad8c\uc758 \ub3c5\ud55c\uc370\ubc29] \uad6d\uac00\uc601\uc6c5 \ub178\uc81c\ud55c \ub77c\uc774\ube0c \uc370\ubc29\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4. (\uc8fc\uc81c + \ub0b4\uc6a9 \ud0dc\ud074\uc2dc \uc0ac\ud615)",
-      "author": "GZSSTV",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/b3/s8/1/I/C/3/X/IC3XA.qR4e-small--.-..jpg",
-      "page": "https://rumble.com/v7fhmhu--.-.html",
-      "viewers": 1087,
-      "hls": "https://rumble.com/live-hls-dvr/Fv6V4Ium4Ow/playlist.m3u8"
+      "id": "v7dccmg",
+      "title": "NEWS/REACTS RUMBLING",
+      "author": "Leaflit & Asari Official",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/7e/s8/6/E/Z/d/Y/EZdYA.qR4e.14.jpg",
+      "page": "https://rumble.com/v7fipjy-newsreacts-rumbling.html",
+      "viewers": 69,
+      "hls": "https://rumble.com/live-hls-dvr/eiKiwHfD0AY/playlist.m3u8"
     },
     {
-      "id": "v7dbb6u",
-      "title": "Dems Hate America! They Hate YOU! Wake Up Or Be Taken Over!",
-      "author": "Graham Allen",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/7f/s8/1/C/9/3/X/C93XA.qR4e-small-Dems-Hate-America-They-Hate..jpg",
-      "page": "https://rumble.com/v7fho4c-dems-hate-america-they-hate-you-wake-up-or-be-taken-over.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls/LILyhWkf3e0/playlist.m3u8"
+      "id": "v7dcnrs",
+      "title": "Benjamin Fulford Update 09.15.26 - Benjamin Fulford Q&A Video",
+      "author": "Situation Update",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/a5/s8/1/o/v/h/Y/ovhYA.qR4e-small-Benjamin-Fulford-Update-09...jpg",
+      "page": "https://rumble.com/v7fj0pa-benjamin-fulford-update-09.15.26-benjamin-fulford-q-and-a-video.html",
+      "viewers": 63,
+      "hls": "https://rumble.com/live-hls/ynvQYQyv6E0/playlist.m3u8"
     },
     {
-      "id": "v7dbb8k",
-      "title": "AMHR Nationals 2026 Tulsa Ok Ford Arena- Day Five (9/14/2026)",
-      "author": "Radiancevideography",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/9a/s8/1/A/-/3/X/A-3XA.qR4e-small-AMHR-Nationals-2026-Tulsa-O..jpg",
-      "page": "https://rumble.com/v7fho62-amhr-nationals-2026-tulsa-ok-ford-arena-day-five-9142026.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls/hwZNaUzOf44/playlist.m3u8"
+      "id": "v7dcn64",
+      "title": "1000\u20ac START - NOUVEAU PARTENAIRE - GIVEWAY CASH / TIPS !discord !vega",
+      "author": "R4FIKI",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/e7/s8/1/m/6/O/z/m6OzA.qR4e-small-START..jpg",
+      "page": "https://rumble.com/v7fj03m-1000-start-nouveau-partenaire-giveway-cash-tips-discord-vega.html",
+      "viewers": 63,
+      "hls": "https://rumble.com/live-hls-dvr/jlavbCDMMfQ/playlist.m3u8"
     },
     {
-      "id": "v7dazoq",
-      "title": "STOCK MARKET OPEN: Live Day Trading w/ MK (Sep. 14th)",
-      "author": "Matt Kohrs",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/7f/s8/1/G/u/0/X/Gu0XA.qR4e-small-STOCK-MARKET-OPEN-Live-Day-..jpg",
-      "page": "https://rumble.com/v7fhcm8-stock-market-open-live-day-trading-w-mk-sep.-14th.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls/HwGfylrHEJU/playlist.m3u8"
+      "id": "v1essrt",
+      "title": "lofi hip hop radio \ud83d\udcda - beats to relax/study to",
+      "author": "Lofi Girl",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/9/V/p/w/9Vpwf.adyb.2-small-lofi-hip-hop-radio-beats-to.jpg",
+      "page": "https://rumble.com/v1heynx-lofi-hip-hop-radio-beats-to-relaxstudy-to.html",
+      "viewers": 59,
+      "hls": "https://rumble.com/live-hls/ECKX2JGo2kA/playlist.m3u8"
     },
     {
-      "id": "v7db9ei",
-      "title": "Ep: 09142026 The Daily MoJo",
-      "author": "The Daily Mojo with Brad Staggs",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/d6/s8/1/q/z/3/X/qz3XA.qR4e-small-Ep-09142026-The-Daily-MoJo..jpg",
-      "page": "https://rumble.com/v7fhmc0-ep-09142026-the-daily-mojo.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls-dvr/wYp67aX0gfE/playlist.m3u8"
+      "id": "v7dcix8",
+      "title": "Russell's Chill Day | Relax and Indirect",
+      "author": "Father Russell",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/75/s8/1/c/Z/f/Y/cZfYA.qR4e-small-Russells-Chill-Day-Relax-an..jpg",
+      "page": "https://rumble.com/v7fivuq-russells-chill-day-relax-and-indirect.html",
+      "viewers": 51,
+      "hls": "https://rumble.com/live-hls-dvr/6jBqrKe3GOI/playlist.m3u8"
     },
     {
-      "id": "v7d7c9i",
-      "title": "The White House Podcast LIVE \ud83c\udfdb\ud83d\udd34",
-      "author": "Free People Radio",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/13/s8/1/m/V/k/X/mVkXA.qR4e-small-The-White-House-Podcast-LIV..jpg",
-      "page": "https://rumble.com/v7fdp70-the-white-house-podcast-live-.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls-dvr/dYJVM7iccZQ/playlist.m3u8"
+      "id": "v7dbdry",
+      "title": "The David Knight Show - 09/14/2026",
+      "author": "The David Knight Show",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/86/s8/1/0/X/4/X/0X4XA.qR4e-small-The-David-Knight-Show-09142..jpg",
+      "page": "https://rumble.com/v7fhqpg-the-david-knight-show-09142026.html",
+      "viewers": 50,
+      "hls": "https://rumble.com/live-hls-dvr/cspw_9BR_BU/playlist.m3u8"
     },
     {
-      "id": "v7da59k",
-      "title": "\ud83c\udf24\ufe0fMONDAY MORNING\u271d\ufe0f \ud83d\udd4a\ufe0f",
-      "author": "miguelifornia",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/1b/s8/1/E/S/Q/X/ESQXA.qR4e-small-MONDAY-MORNING-..jpg",
-      "page": "https://rumble.com/v7fgi72-monday-morning-.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls/-uBLtq_vlYo/playlist.m3u8"
+      "id": "v7dcneo",
+      "title": "Government Ecosystems: A UN-Backed Sustainable Development Goals Agenda",
+      "author": "sonsoflibertyradiolive",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/86/s8/1/2/n/h/Y/2nhYA.qR4e-small-Government-Ecosystems-A-UN-..jpg",
+      "page": "https://rumble.com/v7fj0c6-government-ecosystems-a-un-backed-sustainable-development-goals-agenda.html",
+      "viewers": 46,
+      "hls": "https://rumble.com/live-hls-dvr/SQo1PzlzfDw/playlist.m3u8"
     },
     {
-      "id": "v7dapeo",
-      "title": "Monday Mourning The Aftermath",
-      "author": "Wake Up Patriots",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/01/s8/1/w/e/X/X/weXXA.qR4e-small-Monday-Mourning-The-Afterma..jpg",
-      "page": "https://rumble.com/v7fh2c6-monday-mourning-the-aftermath.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls-dvr/8QMKeS3nniQ/playlist.m3u8"
+      "id": "v7d2asy",
+      "title": "WATCH HERE - ALL Alex Jones Network Shows & Commercial Free Replays",
+      "author": "Ron Gibson Channel - Alex Jones Network Partner",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fw/s8/1/L/l/6/s/Ll6sr.qR4e.6-small-WATCH-HERE-ALL-Alex-Jones-N..jpg",
+      "page": "https://rumble.com/v7f8nqg-watch-here-all-alex-jones-network-shows-and-commercial-free-replays.html",
+      "viewers": 45,
+      "hls": "https://rumble.com/live-hls-dvr/E3FNIEWbQew/playlist.m3u8"
     },
     {
-      "id": "v7dbajo",
-      "title": "JudgingFreedom",
-      "author": "JudgingFreedom",
-      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/ba/s8/6/A/W/3/X/AW3XA.qR4e.n.jpg",
-      "page": "https://rumble.com/v7fhnh6-judgingfreedom.html",
-      "viewers": null,
-      "hls": "https://rumble.com/live-hls-dvr/-vhJ4Lt3-lo/playlist.m3u8"
+      "id": "v7dco9y",
+      "title": "AI \"Regulation\" or World Domination?",
+      "author": "Tara Servatius",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/d1/s8/6/C/F/h/Y/CFhYA.qR4e.e.jpg",
+      "page": "https://rumble.com/v7fj17g-ai-regulation-or-world-domination.html",
+      "viewers": 44,
+      "hls": "https://rumble.com/live-hls-dvr/fX2fDfyL82A/playlist.m3u8"
+    },
+    {
+      "id": "v7d4i3e",
+      "title": "\ud83d\udd34Patriot Conservative News \u2022 pnews.US \u2022 Congressional Hearing Live \u2022 Donald Trump Speech \u2022 White House Briefings",
+      "author": "PatriotAcumen TV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/8c/s8/1/q/A/Q/W/qAQWA.qR4e.2-small-Patriot-News-pnews.US-Congr..jpg",
+      "page": "https://rumble.com/v7fav0w-patriot-news-pnews.us-congressional-hearing-live-donald-trump-speech-white-.html",
+      "viewers": 43,
+      "hls": "https://rumble.com/live-hls-dvr/LlHdvBbD5vc/playlist.m3u8"
+    },
+    {
+      "id": "v7d8f4g",
+      "title": "PressTV Live",
+      "author": "Press TV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/S/d/p/M/SdpMj.qR4e-small-PressTV-Live.jpg",
+      "page": "https://rumble.com/v7fes1y-presstv-live.html",
+      "viewers": 42,
+      "hls": "https://rumble.com/live-hls/p18NBvbidxM/playlist.m3u8"
+    },
+    {
+      "id": "v7d82p2",
+      "title": "\ud83e\uddecTrue Identity\ud83e\uddecWill YOU Be Raised 2 Everlasting Life or Shame & Contempt?\ud83e\udd14Uh-Oh\ud83d\udd25Watchers\ud83d\udc79Giants",
+      "author": "Don't Blow It.\ud83d\udd25TakingTurf TV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/8d/s8/1/C/g/t/X/CgtXA.aiEB.1-small-True-IdentityWill-YOU-Be-Ra..jpg",
+      "page": "https://rumble.com/v7fefmk-will-you-be-raised-2-everlasting-life-or-shame-and-contemptuh-ohwatchersgia.html",
+      "viewers": 41,
+      "hls": "https://rumble.com/live-hls-dvr/dBBPivG6q2U/playlist.m3u8"
+    },
+    {
+      "id": "v7d9v4c",
+      "title": "Detroit Retro",
+      "author": "RealPatriotsParty",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/09/s8/6/c/F/N/X/cFNXA.qR4e.km.jpg",
+      "page": "https://rumble.com/v7fg81u-detroit-retro.html",
+      "viewers": 38,
+      "hls": "https://rumble.com/live-hls-dvr/1jCiLTZzbZs/playlist.m3u8"
+    },
+    {
+      "id": "v7d2x1k",
+      "title": "Watch Alex Jones Warn You About The New World Order Years Ago in These Films",
+      "author": "Alex Jones TV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fwe2/7e/s8/6/-/w/y/W/-wyWA.qR4e.2qg.jpg",
+      "page": "https://rumble.com/v7f99z2-watch-alex-jones-warn-you-about-the-new-world-order-years-ago-in-these-film.html",
+      "viewers": 37,
+      "hls": "https://rumble.com/live-hls/KlMA-LgGipg/playlist.m3u8"
+    },
+    {
+      "id": "v7d2wxi",
+      "title": "Conspiracy TV - 24/7 Conspiracies, Cover-Ups & Unexplained Mysteries.",
+      "author": "Conspiracy TV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/j/n/J/6/jnJ6t.qR4e.1-small-Conspiracy-TV-247-Conspirac..jpg",
+      "page": "https://rumble.com/v7f99v0-conspiracy-tv-247-conspiracies-cover-ups-and-unexplained-mysteries..html",
+      "viewers": 36,
+      "hls": "https://rumble.com/live-hls/6XRc3V_jrjQ/playlist.m3u8"
+    },
+    {
+      "id": "v7d5vnk",
+      "title": "LBN - Liberty Based News Live",
+      "author": "Liberty Based News",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/s8/1/t/_/B/h/t_Bhq.qR4e.1-small-LBN-Liberty-Based-News-Live.jpg",
+      "page": "https://rumble.com/v7fc8l2-lbn-liberty-based-news-live.html",
+      "viewers": 36,
+      "hls": "https://rumble.com/live-hls-dvr/m7X8yO_aIn0/playlist.m3u8"
+    },
+    {
+      "id": "v7dcoce",
+      "title": "The John Fredericks Show [Live Radio & TV] September 15, 2026",
+      "author": "John Fredericks Media Network",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/8f/s8/6/0/G/h/Y/0GhYA.qR4e.j.jpg",
+      "page": "https://rumble.com/v7fj19w-the-john-fredericks-show-live-radio-and-tv-september-15-2026.html",
+      "viewers": 35,
+      "hls": "https://rumble.com/live-hls-dvr/g7Py05prZlA/playlist.m3u8"
+    },
+    {
+      "id": "v7cz2x0",
+      "title": "FaithNFreedomTV 24/7 Live: Biblical Truth, Freedom News & Uplifting Content Non-Stop",
+      "author": "Blessed2Teach | FaithNFreedomTV",
+      "thumb": "https://hugh.cdn.rumble.cloud/video/fww1/5b/s8/1/2/y/2/a/2y2az.qR4e-small-FaithNFreedomTV-Podcast.jpg",
+      "page": "https://rumble.com/v7f5fui-faithnfreedomtv-247-live-biblical-truth-freedom-news-and-uplifting-content-.html",
+      "viewers": 32,
+      "hls": "https://rumble.com/live-hls-dvr/wrIGuqWcTIU/playlist.m3u8"
     }
   ]
 }
